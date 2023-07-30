@@ -1,0 +1,5 @@
+setup.py
+spaceship.egg-info/PKG-INFO
+spaceship.egg-info/SOURCES.txt
+spaceship.egg-info/dependency_links.txt
+spaceship.egg-info/top_level.txt
