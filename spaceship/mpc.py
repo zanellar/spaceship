@@ -4,17 +4,16 @@ import numpy as np
 import json 
 import os
 
-from spaceship.utils.paths import PARAMS_PATH
 
-def create_mpc(model, policy_fun, param_file):
-        
+def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
+
     # Configuring the MPC controller
     mpc = do_mpc.controller.MPC(model)
 
     # Optimizer parameters
     setup_mpc = {
-        'n_horizon': 20,
-        't_step': 0.1,
+        'n_horizon': mpcparams["n_horizon"],
+        't_step': mpcparams["t_step"],
         'n_robust': 1,
         'store_full_solution': True,
     }
@@ -23,10 +22,8 @@ def create_mpc(model, policy_fun, param_file):
     # Parameters 
     p_template = mpc.get_p_template(n_combinations=1) # TODO: n_combinations ?
     def mpc_p_fun(t_now): 
-        ''' Return the values of the model parameters '''
-        with open(os.path.join(PARAMS_PATH, param_file+".json")) as json_file:
-            param = json.load(json_file)
-        p_template["_p"] = [param['m'], param['j11'], param['j22'], param['j33']]
+        ''' Return the values of the model parameters ''' 
+        p_template["_p"] = [modelparams['m'], modelparams['j11'], modelparams['j22'], modelparams['j33']]
         return p_template 
     mpc.set_p_fun(mpc_p_fun)
 
@@ -54,9 +51,9 @@ def create_mpc(model, policy_fun, param_file):
 
     # Weights of diagonal elements of R matrix  
     mpc.set_rterm(
-        uj11=1e-2,
-        uj22=1e-2,
-        uj33=1e-2
+        uj11=mpcparams["rterm_uj11"],
+        uj22=mpcparams["rterm_uj22"],
+        uj33=mpcparams["rterm_uj33"]
     )
 
     mpc.set_objective(mterm=mterm, lterm=lterm)
@@ -67,18 +64,21 @@ def create_mpc(model, policy_fun, param_file):
     # TODO
     # Upper bounds on states
     # TODO
+
+    # Lower bounds on inputs:
+    mpc.bounds['lower','_u', 'uj11'] = mpcparams["lb_uj11"]
+    mpc.bounds['lower','_u', 'uj22'] = mpcparams["lb_uj22"]
+    mpc.bounds['lower','_u', 'uj33'] = mpcparams["lb_uj33"]
+    # Lower bounds on inputs:
+    mpc.bounds['upper','_u', 'uj11'] = mpcparams["ub_uj11"]
+    mpc.bounds['upper','_u', 'uj22'] = mpcparams["ub_uj22"]
+    mpc.bounds['upper','_u', 'uj33'] = mpcparams["ub_uj33"]
+
+    # Nonlinear constraints
     
-
-
-    # Lower bounds on inputs:
-    mpc.bounds['lower','_u', 'uj11'] = -10
-    mpc.bounds['lower','_u', 'uj22'] = -10
-    mpc.bounds['lower','_u', 'uj33'] = -10
-    # Lower bounds on inputs:
-    mpc.bounds['upper','_u', 'uj11'] = 10
-    mpc.bounds['upper','_u', 'uj22'] = 10
-    mpc.bounds['upper','_u', 'uj33'] = 10
-
+    g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'] - envparams["xpd"])**2 + 1/mpcparams["pos_weight"])
+    mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=True)
+ 
     # Scaling
     # TODO
     

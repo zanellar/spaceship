@@ -1,0 +1,19 @@
+{
+    "ub_uj11" : 10.0,
+    "lb_uj11" : -10.0,
+    "rterm_uj11": 0.01,
+
+    "ub_uj22": 10.0,
+    "lb_uj22": -10.0,
+    "rterm_uj22": 0.01,
+
+    "ub_uj33": 10.0,
+    "lb_uj33": -10.0,
+    "rterm_uj33": 0.01,
+
+    "ub_err": 0.1,
+    "pos_weight": 100,
+
+    "n_horizon": 20,
+    "t_step": 0.1
+}

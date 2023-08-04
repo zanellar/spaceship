@@ -6,7 +6,7 @@ import json
 
 from spaceship.utils.paths import PARAMS_PATH
 
-def create_simulator(model, policy_fun, param_file):
+def create_simulator(model, policy_fun, modelparams):
         
     simulator = do_mpc.simulator.Simulator(model) 
     simulator.set_param(t_step = 0.1)
@@ -14,13 +14,11 @@ def create_simulator(model, policy_fun, param_file):
     # Parameters 
     p_template = simulator.get_p_template() # TODO: n_combinations 
     def sim_p_fun(t_now):   
-        ''' Return the values of the model parameters '''
-        with open(os.path.join(PARAMS_PATH, param_file+".json")) as json_file:
-            param = json.load(json_file)
-        p_template['m'] = param['m']
-        p_template['j11'] = param['j11']
-        p_template['j22'] = param['j22']
-        p_template['j33'] = param['j33']
+        ''' Return the values of the model parameters ''' 
+        p_template['m'] = modelparams['m']
+        p_template['j11'] = modelparams['j11']
+        p_template['j22'] = modelparams['j22']
+        p_template['j33'] = modelparams['j33']
         return p_template 
     simulator.set_p_fun(sim_p_fun)
 
