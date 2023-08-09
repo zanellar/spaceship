@@ -53,8 +53,10 @@ def pathpatch_2d_to_3d(pathpatch, z = 0, normal = 'z'):
     pathpatch._facecolor3d = pathpatch.get_facecolor #Get the face color    
 
     verts = path.vertices #Get the vertices in 2D
-
-    d = np.cross(normal, (0, 0, 1)) #Obtain the rotation vector    
+    
+    sign = np.sign(np.dot(normal, (0, 0, 1))) #Figure out which way is up
+    sign = 1 if sign == 0 else sign 
+    d = sign*np.cross(normal, (0, 0, 1)) #Obtain the rotation vector   
     M = rotation_matrix(d) #Get the rotation matrix
 
     pathpatch._segment3d = np.array([np.dot(M, (x, y, 0)) + (0, 0, z) for x, y in verts])
@@ -147,7 +149,6 @@ class Drone3DStopMotion:
 
         for i,normal,position in zip(range(n),orientations,positions):
 
-
             if i % (self.skipframes+1) != 0:
                 continue
 
@@ -173,7 +174,6 @@ class Drone3DStopMotion:
         self.ax.set_xlim3d(self.axlim[0], self.axlim[1])
         self.ax.set_ylim3d(self.axlim[0], self.axlim[1])
         self.ax.set_zlim3d(self.axlim[0], self.axlim[1])
-        print("xlim: ", self.axlim) 
 
         plt.show()
 
@@ -196,8 +196,11 @@ if __name__ == '__main__':
     
     visualizer.add_slits(slits)
   
-    rotations = [(0,0,1), (0.2,0,0.8), (0.5,0,0.5), (0.8,0,0.2)]
-    translations = [(0,0,0), (0,0,0.5), (0,0.5,1), (0,1,1)]
+    # rotations = [(0,0,1), (0.2,0,0.8), (0.5,0,0.5), (0.8,0,0.2), (0.8,0,-0.2)]
+    # translations = [(0,0,0), (0,0,0.5), (0,0.5,1), (0,1,1), (0,1.5,1)]
+
+    rotations = [ (0.8,0,0.2), (0.8,0,-0.2)]
+    translations = [ (0,1,1), (0,1.5,1)]
 
     visualizer.add_drone(rotations, translations)
 

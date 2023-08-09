@@ -40,14 +40,14 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     ###################### Objective function ######################
 
     # Real torque that is applied to the system
-    J = ca.diag(ca.vertcat(model.p['j11'], model.p['j22'], model.p['j33']))
-    tau = ca.mtimes(ca.skew(model.x['xw']), ca.mtimes(J, model.x['xw'])) + model.tvp['tau1']
+    # J = ca.diag(ca.vertcat(model.u['uj11'], model.u['uj22'], model.u['uj33']))
+    # tau = ca.mtimes(ca.skew(model.x['xw']), ca.mtimes(J, model.x['xw'])) + model.tvp['tau1']
                             
     # Lagrange term 
-    mterm = ca.mtimes(tau.T, tau)
+    mterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
 
     # Meyer term
-    lterm = ca.mtimes(tau.T, tau)
+    lterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
 
     # Weights of diagonal elements of R matrix  
     mpc.set_rterm(
@@ -66,18 +66,18 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     # TODO
 
     # Lower bounds on inputs:
-    mpc.bounds['lower','_u', 'uj11'] = mpcparams["lb_uj11"]
-    mpc.bounds['lower','_u', 'uj22'] = mpcparams["lb_uj22"]
-    mpc.bounds['lower','_u', 'uj33'] = mpcparams["lb_uj33"]
-    # Lower bounds on inputs:
-    mpc.bounds['upper','_u', 'uj11'] = mpcparams["ub_uj11"]
-    mpc.bounds['upper','_u', 'uj22'] = mpcparams["ub_uj22"]
-    mpc.bounds['upper','_u', 'uj33'] = mpcparams["ub_uj33"]
+    # mpc.bounds['lower','_u', 'uj11'] = mpcparams["lb_uj11"]
+    # mpc.bounds['lower','_u', 'uj22'] = mpcparams["lb_uj22"]
+    # mpc.bounds['lower','_u', 'uj33'] = mpcparams["lb_uj33"]
+    # # Lower bounds on inputs:
+    # mpc.bounds['upper','_u', 'uj11'] = mpcparams["ub_uj11"]
+    # mpc.bounds['upper','_u', 'uj22'] = mpcparams["ub_uj22"]
+    # mpc.bounds['upper','_u', 'uj33'] = mpcparams["ub_uj33"]
 
     # Nonlinear constraints
     
     g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'] - envparams["xpd"])**2 + 1/mpcparams["pos_weight"])
-    mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=True)
+    mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
  
     # Scaling
     # TODO
