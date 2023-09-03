@@ -1,11 +1,12 @@
 import json
-import os
 import numpy as np
+import os
 from spaceship.model import create_model
 from spaceship.mpc import create_mpc
 from spaceship.sim import create_simulator
 from spaceship.visual.plot import Plotter
 from spaceship.visual.draw3d import Drone3DStopMotion
+import matplotlib.pyplot as plt
 
 from spaceship.policies import void_policy
 
@@ -26,35 +27,38 @@ with open(os.path.join(PARAMS_PATH, mpc_param_file+".json")) as json_file:
     
 with open(os.path.join(PARAMS_PATH, env_param_file+".json")) as json_file:
     envparams = json.load(json_file)
-
+    
 with open(os.path.join(PARAMS_PATH, sim_param_file+".json")) as json_file:
     simparams = json.load(json_file)
-    
 
 # Create model, MPC and simulator
-model = create_model(modelparams)
-mpc = create_mpc(model, void_policy, modelparams, mpcparams, envparams)
+model = create_model(modelparams) 
 simulator = create_simulator(model, void_policy, modelparams, simparams)
 
 # Set initial state
 simulator.x0['xp'] = [0,0,0.5]
-simulator.x0['xv'] = [0,1,0] 
+simulator.x0['xv'] = [0,0,0]
 simulator.x0['xr1'] = [1,0,0]
 simulator.x0['xr2'] = [0,1,0]
-simulator.x0['xn'] = [0,0,1]
-simulator.x0['xw'] = [0.1,0.1,0.1] 
-x = simulator.x0.cat.full()
-mpc.x0 = x 
-mpc.set_initial_guess() 
-
-
-# Run MPC main loop 
+simulator.x0['xn'] = [0,0,1] 
+simulator.x0['xw'] = [1,0,0]
+ 
+# Run main loop 
 orientations = []
-positions = []
-errors = []
-distances = []
-for k in range(simparams["n_steps"]): 
-    u = mpc.make_step(x)  
+positions = [] 
+
+# ax = plt.axes(projection = '3d') #Create axes 
+# ax.quiver(*Drone3DStopMotion.origin, *Drone3DStopMotion.x_axis, color='k', label='X-axis', alpha=0.2)
+# ax.quiver(*Drone3DStopMotion.origin, *Drone3DStopMotion.y_axis, color='k', label='Y-axis', alpha=0.2)
+# ax.quiver(*Drone3DStopMotion.origin, *Drone3DStopMotion.z_axis, color='k', label='Z-axis', alpha=0.2)
+
+for k in range(simparams["n_steps"]):  
+
+    # Control input
+    u = np.array([0, 0, 0])
+    u = u.reshape((3,1))
+
+    # Simulate
     x = simulator.make_step(u) 
 
     # states
@@ -64,54 +68,34 @@ for k in range(simparams["n_steps"]):
     xr2 = x[9:12]
     xn = x[12:15]
     xw = x[15:18] 
-   
+  
+    print(k,  xn[0], xn[1], xn[2])
+    # print(xr1, xr2, xn)
+    print(xw[0], xw[1], xw[2])
+    # print(xp,xv)
+
+    # if k > 5:
+    #     ax.quiver(*Drone3DStopMotion.origin, *np.array(xr1), color='r')
+    #     ax.quiver(*Drone3DStopMotion.origin, *np.array(xr2), color='g' )
+    #     ax.quiver(*Drone3DStopMotion.origin, *np.array(xn), color='b' )
+
     positions.append(xp)
-    orientations.append(xn) 
-
-    errors.append(1-np.dot(xn.T,np.array(envparams["xnd"]).reshape((3,1))))
-    distances.append(np.linalg.norm(xp[0:2]-np.array(envparams["xpd"]).reshape((3,1))[0:2]))
+    orientations.append(xn)
 
 
-import matplotlib.pyplot as plt  
-
-# Plot the trajectories
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+# Graphics
 
 positions = np.array(positions).reshape((simparams["n_steps"],3))
 orientations = np.array(orientations).reshape((simparams["n_steps"],3))
-print(orientations )
-print(distances )
-errors = np.array(errors).flatten()
-  
-# Plot orientation trajectory (Euler angles)
-time_array = np.arange(simparams["n_steps"])   # Create the time array
-ax1.plot(time_array, distances, label='distances')
-ax1.plot(time_array, errors, label='errors')
-ax2.plot(distances, errors ) 
 
-#legend, axes and title
-ax1.set_xlabel('time')
-ax1.set_ylabel('distance')
-ax1.set_title('Distance and error')
-ax1.legend()
-
-ax2.set_xlabel('distance')
-ax2.set_ylabel('error')
-ax2.set_title('Error vs distance')
-ax2.legend()
- 
-
-plt.tight_layout()
-plt.show()
-
-# Graphics
+print("@@@@@@@@@@@@@@", np.linalg.norm(orientations[-1]-orientations[0]))
 slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
 graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//10, lowerlimits=-1, upperlimits=3)
 graphics.add_slits(slits)
 graphics.add_drone(orientations, positions)
 graphics.show()
-
-# # Plotting
-# plotter = Plotter(mpc, simulator) 
-# plotter.plot()
- 
+  
+# ax.set_xlim3d(-5, 5)
+# ax.set_ylim3d(-5, 5)
+# ax.set_zlim3d(-5, 5)
+# plt.show()

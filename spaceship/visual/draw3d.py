@@ -3,32 +3,10 @@ import numpy as np
 from matplotlib.patches import Circle, Rectangle 
 import matplotlib.pyplot as plt
 
+from spaceship.utils.ops import normal2rotmat
+
 #https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
-
-
-def rotation_matrix(d):
-    """
-    Calculates a rotation matrix given a vector d. The direction of d
-    corresponds to the rotation axis. The length of d corresponds to 
-    the sin of the angle of rotation.
-
-    Variant of: http://mail.scipy.org/pipermail/numpy-discussion/2009-March/040806.html
-    """
-    sin_angle = np.linalg.norm(d)
-
-    if sin_angle == 0:
-        return np.identity(3)
-
-    d /= sin_angle
-
-    eye = np.eye(3)
-    ddt = np.outer(d, d)
-    skew = np.array([[    0,    d[2],   -d[1]],
-                        [-d[2], 0,      d[0]],
-                        [d[1],  -d[0],  0]], dtype=np.float64)
-
-    M = ddt + np.sqrt(1 - sin_angle**2) * (eye - ddt) + sin_angle * skew
-    return M
+ 
 
 def pathpatch_2d_to_3d(pathpatch, z = 0, normal = 'z'):
     """
@@ -53,13 +31,10 @@ def pathpatch_2d_to_3d(pathpatch, z = 0, normal = 'z'):
     pathpatch._facecolor3d = pathpatch.get_facecolor #Get the face color    
 
     verts = path.vertices #Get the vertices in 2D
-    
-    sign = np.sign(np.dot(normal, (0, 0, 1))) #Figure out which way is up
-    sign = 1 if sign == 0 else sign 
-    d = sign*np.cross(normal, (0, 0, 1)) #Obtain the rotation vector   
-    M = rotation_matrix(d) #Get the rotation matrix
+     
+    R = normal2rotmat(normal) #Get the rotation matrix
 
-    pathpatch._segment3d = np.array([np.dot(M, (x, y, 0)) + (0, 0, z) for x, y in verts])
+    pathpatch._segment3d = np.array([np.dot(R, (x, y, 0)) + (0, 0, z) for x, y in verts])
 
 
 def pathpatch_translate(pathpatch, delta):
@@ -102,6 +77,11 @@ def set_axes_equal(ax):
 
 class Drone3DStopMotion:
 
+    origin = np.array([0, 0, 0])
+    x_axis = np.array([1, 0, 0])
+    y_axis = np.array([0, 1, 0])
+    z_axis = np.array([0, 0, 1])
+
     def __init__(self, skipframes=0, lowerlimits=None, upperlimits=None):
         """
         Prepares a 3D scene 
@@ -114,7 +94,13 @@ class Drone3DStopMotion:
 
         self.lowerlimits = lowerlimits
         self.upperlimits = upperlimits
+          
+        # Plot the original reference frame
+        self.ax.quiver(*self.origin, *self.x_axis, color='k', label='X-axis', alpha=0.2)
+        self.ax.quiver(*self.origin, *self.y_axis, color='k', label='Y-axis', alpha=0.2)
+        self.ax.quiver(*self.origin, *self.z_axis, color='k', label='Z-axis', alpha=0.2)
 
+        # Make the axes equally spaced
         self.ax.set_box_aspect([1.0, 1.0, 1.0])
         set_axes_equal(self.ax)
     
@@ -127,8 +113,11 @@ class Drone3DStopMotion:
         for slit in slits: 
             rect = Rectangle((0, 0), slit["width"], slit["height"], facecolor=color, alpha=alpha)
             self.ax.add_patch(rect)
-            pathpatch_2d_to_3d(rect, z=slit["position"][2], normal='y')
-            pathpatch_translate(rect, delta=slit["position"])
+            x_pos = slit["position"][0] - slit["width"]/2
+            y_pos = slit["position"][1]
+            z_pos = slit["position"][2] + slit["height"]/2
+            pathpatch_2d_to_3d(rect, z=z_pos, normal='y')
+            pathpatch_translate(rect, delta=[x_pos, y_pos, z_pos])
 
     def add_drone(self, orientations, positions, color_disk='b', alpha_disk=0.5, color_normal='r', alpha_normal=0.5):
         """
@@ -189,9 +178,8 @@ if __name__ == '__main__':
     visualizer = Drone3DStopMotion()
 
     slits = [
-        dict(height=3, width=0.2, position=(-0.1, 1.2, 1.5)),
-        dict(height=3, width=0.2, position=(-0.1, 1.6, 1.5))
-
+        dict(height=3, width=0.2, position=(0, 1.2)),
+        dict(height=3, width=0.2, position=(0, 1.6)) 
              ]
     
     visualizer.add_slits(slits)

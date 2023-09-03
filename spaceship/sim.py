@@ -6,10 +6,10 @@ import json
 
 from spaceship.utils.paths import PARAMS_PATH
 
-def create_simulator(model, policy_fun, modelparams):
+def create_simulator(model, policy_fun, modelparams, simparams):
         
     simulator = do_mpc.simulator.Simulator(model) 
-    simulator.set_param(t_step = 0.1)
+    simulator.set_param(t_step = simparams['t_step'])
 
     # Parameters 
     p_template = simulator.get_p_template() # TODO: n_combinations 
@@ -30,7 +30,6 @@ def create_simulator(model, policy_fun, modelparams):
         tvp_template['tau1'] = policy_fun(t_now)['tau1']
         return tvp_template 
     simulator.set_tvp_fun(sim_tvp_fun)
-
-
+ 
     simulator.setup()
     return simulator

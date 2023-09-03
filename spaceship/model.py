@@ -4,25 +4,23 @@ import casadi as ca
 
 
 
-def create_model():
+def create_model(modelparams):
     
-    model_type = 'continuous' # either 'discrete' or 'continuous'
+    model_type = 'discrete'  
     model = do_mpc.model.Model(model_type)
+
+    dt = modelparams["t_step"]
 
     ###################### Variables #########################
 
-    # State variables
+    # Current state
     xp = model.set_variable(var_type='_x', var_name='xp', shape=(3,1)) # Position (p)
     xv = model.set_variable(var_type='_x', var_name='xv', shape=(3,1)) # Velocity (dp)
-    xn = model.set_variable(var_type='_x', var_name='xn', shape=(3,1)) # Attitude vector (n)
+    xr1 = model.set_variable(var_type='_x', var_name='xr1', shape=(3,1)) # First column of rotation matrix  
+    xr2 = model.set_variable(var_type='_x', var_name='xr2', shape=(3,1)) # Second column of rotation matrix
+    xn = model.set_variable(var_type='_x', var_name='xn', shape=(3,1)) # Third column of rotation matrix
     xw = model.set_variable(var_type='_x', var_name='xw', shape=(3,1)) # Angular velocity (omega)
-
-    # State derivatives 
-    dxp = model.set_variable(var_type='_x', var_name='dxp', shape=(3,1))
-    dxv = model.set_variable(var_type='_x', var_name='dxv', shape=(3,1))
-    dxn = model.set_variable(var_type='_x', var_name='dxn', shape=(3,1))
-    dxw = model.set_variable(var_type='_x', var_name='dxw', shape=(3,1)) 
-
+  
     # Control variables (diagonal of inertia matrix)
     uj11 = model.set_variable(var_type='_u', var_name='uj11', shape=(1,1))
     uj22 = model.set_variable(var_type='_u', var_name='uj22', shape=(1,1))
@@ -42,22 +40,38 @@ def create_model():
 
     print(model.x.labels()) 
     
-    ###################### Equation ######################
-    model.set_rhs('xp', dxp) 
-    model.set_rhs('xv', dxv)
-    model.set_rhs('xn', dxn)
-    model.set_rhs('xw', dxw)
+    ###################### Equation ###################### 
 
-    # Nonlinear ODE 
-    eq_dxp = xv
-    eq_dxv = f1/m 
-    eq_dxn = ca.mtimes(xn.T, ca.skew(xw)).T  
-    eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), ca.mtimes(uJ, xw)) + tau1))
+    # Rotation matrix
+    R = ca.horzcat(xr1, xr2, xn) 
 
-    model.set_rhs('dxp', eq_dxp) 
-    model.set_rhs('dxv', eq_dxv)
-    model.set_rhs('dxn', eq_dxn)
-    model.set_rhs('dxw', eq_dxw) 
+    # Cayley map
+    def cay(x):
+        return ca.SX.eye(3) + 0.5*ca.skew(x) @ ca.inv(ca.SX.eye(3) - 0.5*ca.skew(x))
+    
+    # Torque
+    tau = ca.cross(uJ @ xw, xw) + tau1
+
+    # Intermediate angular velocity 
+    _w = xw + 0.5*dt*ca.inv(J) @ (tau + ca.cross(J @ xw, xw))
+    C = cay(dt*_w)
+
+    # Right hand side of update equation 
+    next_xp = xp + dt*xv
+    next_xv = xv + dt*f1/m 
+    next_xr1 = R @ C[:, 0 ]
+    next_xr2 = R @ C[:, 1 ]
+    next_xn = R @ C[:, 2 ]
+    next_xw = _w + 0.5*dt*ca.inv(J) @ (tau + ca.cross(J @ _w, _w))
+
+    # Set update equation
+    model.set_rhs('xp', next_xp) 
+    model.set_rhs('xv', next_xv)
+    model.set_rhs('xr1', next_xr1)
+    model.set_rhs('xr2', next_xr2)
+    model.set_rhs('xn', next_xn)
+    model.set_rhs('xw', next_xw)
+
 
     # Expressions for kinetic and potential energy
     # E_kin = # TODO
@@ -65,5 +79,6 @@ def create_model():
     # model.set_expression('E_kin', E_kin)
     # model.set_expression('E_pot', E_pot)
 
-    model.setup()
+    model.setup() 
+
     return model

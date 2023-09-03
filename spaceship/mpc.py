@@ -15,9 +15,14 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
         'n_horizon': mpcparams["n_horizon"],
         't_step': mpcparams["t_step"],
         'n_robust': 1,
-        'store_full_solution': True,
+        'collocation_ni': 2,
+        'store_full_solution': False,
+        'store_lagr_multiplier': False,
     }
     mpc.set_param(**setup_mpc)
+
+    if mpcparams["silence"]:
+        mpc.settings.supress_ipopt_output() 
 
     # Parameters 
     p_template = mpc.get_p_template(n_combinations=1) # TODO: n_combinations ?
@@ -66,17 +71,17 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     # TODO
 
     # Lower bounds on inputs:
-    # mpc.bounds['lower','_u', 'uj11'] = mpcparams["lb_uj11"]
-    # mpc.bounds['lower','_u', 'uj22'] = mpcparams["lb_uj22"]
-    # mpc.bounds['lower','_u', 'uj33'] = mpcparams["lb_uj33"]
-    # # Lower bounds on inputs:
-    # mpc.bounds['upper','_u', 'uj11'] = mpcparams["ub_uj11"]
-    # mpc.bounds['upper','_u', 'uj22'] = mpcparams["ub_uj22"]
-    # mpc.bounds['upper','_u', 'uj33'] = mpcparams["ub_uj33"]
+    mpc.bounds['lower','_u', 'uj11'] = mpcparams["lb_uj11"]
+    mpc.bounds['lower','_u', 'uj22'] = mpcparams["lb_uj22"]
+    mpc.bounds['lower','_u', 'uj33'] = mpcparams["lb_uj33"]
+    # Lower bounds on inputs:
+    mpc.bounds['upper','_u', 'uj11'] = mpcparams["ub_uj11"]
+    mpc.bounds['upper','_u', 'uj22'] = mpcparams["ub_uj22"]
+    mpc.bounds['upper','_u', 'uj33'] = mpcparams["ub_uj33"]
 
-    # Nonlinear constraints
-    
-    g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'] - envparams["xpd"])**2 + 1/mpcparams["pos_weight"])
+    # Nonlinear constraints  
+    g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+
     mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
  
     # Scaling

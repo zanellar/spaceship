@@ -1,19 +1,21 @@
 {
-    "ub_uj11" : 10.0,
-    "lb_uj11" : -10.0,
+    "ub_uj11" : 20.0,
+    "lb_uj11" : -20.0,
     "rterm_uj11": 1.0,
 
-    "ub_uj22": 10.0,
-    "lb_uj22": -10.0,
+    "ub_uj22": 20.0,
+    "lb_uj22": -20.0,
     "rterm_uj22": 1.0,
 
-    "ub_uj33": 10.0,
-    "lb_uj33": -10.0,
-    "rterm_uj33": 1.0,
+    "ub_uj33": 20.0,
+    "lb_uj33": -20.0,
+    "rterm_uj33": 0.0,
 
-    "ub_err": 0.1,
-    "pos_weight": 100,
+    "ub_err": 0.05,
+    "pos_weight": 200,
 
-    "n_horizon": 10,
-    "t_step": 0.01
+    "n_horizon": 20,
+    "t_step": 0.1,
+    "silence": false
+
 }
