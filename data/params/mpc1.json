@@ -14,8 +14,8 @@
     "ub_err": 0.05,
     "pos_weight": 200,
 
-    "n_horizon": 20,
-    "t_step": 0.1,
-    "silence": false
+    "n_horizon": 10,
+    "t_step": 0.05,
+    "silence": true
 
 }

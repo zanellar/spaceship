@@ -1,4 +1,4 @@
 { 
-    "n_steps": 100,
-    "t_step": 0.1
+    "n_steps": 500,
+    "t_step": 0.05
 }

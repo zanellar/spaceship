@@ -37,7 +37,7 @@ simulator = create_simulator(model, void_policy, modelparams, simparams)
 
 # Set initial state
 simulator.x0['xp'] = [0,0,0.5]
-simulator.x0['xv'] = [0,0,0]
+simulator.x0['xv'] = [0,1,0]
 simulator.x0['xr1'] = [1,0,0]
 simulator.x0['xr2'] = [0,1,0]
 simulator.x0['xn'] = [0,0,1] 
@@ -90,7 +90,7 @@ orientations = np.array(orientations).reshape((simparams["n_steps"],3))
 
 print("@@@@@@@@@@@@@@", np.linalg.norm(orientations[-1]-orientations[0]))
 slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
-graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//10, lowerlimits=-1, upperlimits=3)
+graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=-1, upperlimits=5)
 graphics.add_slits(slits)
 graphics.add_drone(orientations, positions)
 graphics.show()
