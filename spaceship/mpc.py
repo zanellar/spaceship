@@ -16,7 +16,7 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
         't_step': mpcparams["t_step"],
         'n_robust': 1,
         'collocation_ni': 2,
-        'store_full_solution': False,
+        'store_full_solution': True,
         'store_lagr_multiplier': False,
     }
     mpc.set_param(**setup_mpc)

@@ -53,11 +53,13 @@ orientations = []
 positions = []
 errors = []
 distances = []
+energy = []
+zero_work_term = []
 
 for k in range(simparams["n_steps"]):  
 
     print(f"step {k}")
-    u = mpc.make_step(x)  
+    u = mpc.make_step(x) 
     x = simulator.make_step(u) 
 
     # states
@@ -67,6 +69,12 @@ for k in range(simparams["n_steps"]):
     xr2 = x[9:12]
     xn = x[12:15]
     xw = x[15:18] 
+
+    J = np.array([[modelparams["j11"],0,0],[0,modelparams["j22"],0],[0,0,modelparams["j33"]]]) 
+    m = modelparams["m"]
+ 
+    energy.append(0.5*m*np.dot(xv.T,xv) + 0.5*xw.T @ J @ xw)  
+    zero_work_term.append( np.dot(xw.T, np.cross(xw.flatten(), (J @ xw).flatten())))
    
     positions.append(xp)
     orientations.append(xn) 
@@ -77,32 +85,48 @@ for k in range(simparams["n_steps"]):
 
 import matplotlib.pyplot as plt  
 
-# Plot the trajectories
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+# Plot the trajectories# Plot the trajectories
+fig1, ax1 = plt.subplots(figsize=(8, 8))
+fig2, ax2 = plt.subplots(figsize=(8, 8))
+fig3, ax3 = plt.subplots(figsize=(8, 8))
+fig4, ax4 = plt.subplots(figsize=(8, 8))
 
 positions = np.array(positions).reshape((simparams["n_steps"],3))
-orientations = np.array(orientations).reshape((simparams["n_steps"],3))
-print(orientations )
-print(distances )
+orientations = np.array(orientations).reshape((simparams["n_steps"],3)) 
 errors = np.array(errors).flatten()
+energy = np.array(energy).flatten()
   
-# Plot orientation trajectory (Euler angles)
+# Plot distance of the drone to the target slit and the orientation error:
+# 1) Plot the distance & error vs time
 time_array = np.arange(simparams["n_steps"])   # Create the time array
 ax1.plot(time_array, distances, label='distances')
 ax1.plot(time_array, errors, label='errors')
-ax2.plot(distances, errors ) 
-
-#legend, axes and title
 ax1.set_xlabel('time')
 ax1.set_ylabel('distance')
-ax1.set_title('Distance and error')
+ax1.set_title('Distance and error vs time')
 ax1.legend()
 
+# 2) Plot the distance vs error
+ax2.plot(distances, errors ) 
 ax2.set_xlabel('distance')
 ax2.set_ylabel('error')
 ax2.set_title('Error vs distance')
 ax2.legend()
- 
+
+# Plot energy vs time
+ax3.plot(time_array, energy )
+ax3.set_xlabel('time')
+ax3.set_ylabel('energy')
+ax3.set_title('Energy vs time')
+ax3.legend() 
+
+# Plot zero work term vs time
+ax4.plot(time_array, zero_work_term )
+ax4.set_xlabel('time')
+ax4.set_ylabel('zero work term')
+ax4.set_title('Zero work term vs time')
+ax4.legend()
+
 
 plt.tight_layout()
 plt.show()
@@ -115,6 +139,6 @@ graphics.add_drone(orientations, positions)
 graphics.show()
 
 # # Plotting
-# plotter = Plotter(mpc, simulator) 
-# plotter.plot()
+plotter = Plotter(mpc, simulator) 
+plotter.plot()
  
