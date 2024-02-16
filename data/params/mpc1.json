@@ -1,20 +1,20 @@
 {
     "ub_uj11" : 20.0,
     "lb_uj11" : -20.0,
-    "rterm_uj11": 1.0,
+    "rterm_uj11": 0 ,
 
     "ub_uj22": 20.0,
     "lb_uj22": -20.0,
-    "rterm_uj22": 1.0,
+    "rterm_uj22": 0 ,
 
     "ub_uj33": 20.0,
     "lb_uj33": -20.0,
     "rterm_uj33": 0.0,
 
-    "ub_err": 0.05,
+    "ub_err": 1,
     "pos_weight": 200,
 
-    "n_horizon": 10,
+    "n_horizon": 15,
     "t_step": 0.05,
     "silence": true
 

@@ -52,7 +52,7 @@ Thumbs.db
 *.pyc
   
 # setup
-nes.egg-info
+spaceship.egg-info
 *.pt
 *.pth
-wandb/
+data/plots/*

@@ -1,15 +1,17 @@
 import json
 import os
+from datetime import datetime
 import numpy as np
 from spaceship.model import create_model
 from spaceship.mpc import create_mpc
 from spaceship.sim import create_simulator
 from spaceship.visual.plot import Plotter
-from spaceship.visual.draw3d import Drone3DStopMotion
+from spaceship.visual.draw3d import Drone3DStopMotion 
+from spaceship.policies import void_policy 
+from spaceship.utils.paths import PARAMS_PATH, RESULTS_PATH
 
-from spaceship.policies import void_policy
-
-from spaceship.utils.paths import PARAMS_PATH
+flg_baseline = False
+# flg_baseline = True
 
 # Choose parameter file
 model_param_file = 'model1'
@@ -47,10 +49,26 @@ simulator.x0['xv'] = [0,0.1,0]
 simulator.x0['xr1'] = [1,0,0]
 simulator.x0['xr2'] = [0,1,0]
 simulator.x0['xn'] = [0,0,1]
-simulator.x0['xw'] = [0.05,0.05,0.05] 
-x = simulator.x0.cat.full()
-mpc.x0 = x 
+
+if flg_baseline:
+    xw0 = input("Enter the initial angular velocity: ")
+    try:
+        xw0 = xw0.replace("[","")
+        xw0 = xw0.replace("]","")
+    except:
+        pass
+    xw0 = xw0.split(",")
+    xw0 = [float(i) for i in xw0]
+    simulator.x0['xw'] = xw0 
+else:
+    simulator.x0['xw'] = np.random.rand(3)*0.05 + 0.05
+    print(simulator.x0['xw'])
+    input("Press Enter to continue...")
+
+x0 = simulator.x0.cat.full()
+mpc.x0 = x0
 mpc.set_initial_guess() 
+x = x0 
 
 
 # Run MPC main loop 
@@ -62,12 +80,15 @@ energy = []
 zero_work_term = []
 torques = []
 constraints = []
-
+ 
 for k in range(simparams["n_steps"]):  
 
     print(f"step {k}")
-    u = mpc.make_step(x)
+    u = mpc.make_step(x) 
     
+    if flg_baseline:
+        u *= 0
+
     x = simulator.make_step(u) 
 
     # states
@@ -95,80 +116,43 @@ for k in range(simparams["n_steps"]):
     distances.append(np.linalg.norm(xp[0:2]-np.array(envparams["xpd"]).reshape((3,1))[0:2]))
 
 
-import matplotlib.pyplot as plt  
-
-# Plot the trajectories# Plot the trajectories
-fig1, ax1 = plt.subplots(figsize=(8, 8))
-fig2, ax2 = plt.subplots(figsize=(8, 8))
-fig3, ax3 = plt.subplots(figsize=(8, 8))
-fig4, ax4 = plt.subplots(figsize=(8, 8))
-fig5, ax5 = plt.subplots(figsize=(8, 8))
-fig6, ax6 = plt.subplots(figsize=(8, 8))
-
+time_array = np.arange(simparams["n_steps"])   
+torques = np.array(torques).reshape((simparams["n_steps"],3))
 positions = np.array(positions).reshape((simparams["n_steps"],3))
 orientations = np.array(orientations).reshape((simparams["n_steps"],3)) 
 errors = np.array(errors).flatten()
 energy = np.array(energy).flatten()
-  
-# Plot distance of the drone to the target slit and the orientation error:
-# 1) Plot the distance & error vs time
-time_array = np.arange(simparams["n_steps"])   # Create the time array
-ax1.plot(time_array, distances, label='distances')
-ax1.plot(time_array, errors, label='errors')
-ax1.set_xlabel('time')
-ax1.set_ylabel('distance')
-ax1.set_title('Distance and error vs time')
-ax1.legend()
-
-# 2) Plot the distance vs error
-ax2.plot(distances, errors ) 
-ax2.set_xlabel('distance')
-ax2.set_ylabel('error')
-ax2.set_title('Error vs distance')
-ax2.legend()
-
-# Plot energy vs time
-ax3.plot(time_array, energy )
-ax3.set_xlabel('time')
-ax3.set_ylabel('energy')
-ax3.set_title('Energy vs time')
-ax3.legend() 
-
-# Plot zero work term vs time
-ax4.plot(time_array, zero_work_term )
-ax4.set_xlabel('time')
-ax4.set_ylabel('zero work term')
-ax4.set_title('Zero work term vs time')
-ax4.legend()
-
-# plot the torque vs time
-torques = np.array(torques).reshape((simparams["n_steps"],3))
-ax5.plot(time_array, torques ) 
-# ax5.scatter(time_array, torques[:,0], label='torque1')
-ax5.set_xlabel('time')
-ax5.set_ylabel('torques')
-ax5.set_title('Torques vs time')
-ax5.legend()
-
-# plot the constraints vs time
-ax6.plot(time_array, constraints )
-ax6.set_xlabel('time')
-ax6.set_ylabel('constraints')
-ax6.set_title('Constraints vs time')
-ax6.legend()
-
-
-plt.tight_layout()
-plt.show()
-
-# Graphics
 slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
-graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=-1, upperlimits=5)
-graphics.add_slits(slits)
-graphics.add_drone(orientations, positions)
-graphics.show()
+   
+# Save data as json file
+data = {
+    "initial_state": x0.tolist(),
+    "mpcparams": mpcparams,
+    "modelparams": modelparams,
+    "simparams": simparams,
+    "sysparams": systemparams,
+    "envparams": envparams,
+    "slits": slits,
+    "orientations": orientations.tolist(), 
+    "positions": positions.tolist(),
+    "errors": errors.tolist(),
+    "distances": np.array(distances).tolist(),
+    "energy": energy.tolist(),
+    "zero_work_term": np.array(zero_work_term).tolist(),
+    "torques": torques.tolist(),
+    "constraints": np.array(constraints).tolist(),
+    "time_array": time_array.tolist() 
+}
 
-# # Plotting
-plotter = Plotter(mpc, simulator) 
-plotter.plot()
- 
+if flg_baseline:
+    file_path = os.path.join(RESULTS_PATH, f"baseline_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json")
+else:
+    file_path = os.path.join(RESULTS_PATH, f"controlled_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json")
+
+with open(file_path, 'w') as outfile:
+    json.dump(data, outfile)
+
+
+# # # Plotting
+# plotter = Plotter(mpc, simulator) 
+# plotter.plot()

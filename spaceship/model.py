@@ -72,12 +72,12 @@ def create_model(modelparams):
     model.set_rhs('xn', next_xn)
     model.set_rhs('xw', next_xw)
 
-
     # Expressions for kinetic and potential energy
     # E_kin = # TODO
     # E_kin = # TODO
     # model.set_expression('E_kin', E_kin)
     # model.set_expression('E_pot', E_pot)
+    model.set_expression('tau', tau)
 
     model.setup() 
 

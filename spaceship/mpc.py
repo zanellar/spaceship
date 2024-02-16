@@ -44,15 +44,19 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
 
     ###################### Objective function ######################
 
-    # Real torque that is applied to the system
-    # J = ca.diag(ca.vertcat(model.u['uj11'], model.u['uj22'], model.u['uj33']))
+    # Real torque that is applied to the system 
+    # print(ca.diag(model._u))
+    # J = ca.diag(model._u)
     # tau = ca.mtimes(ca.skew(model.x['xw']), ca.mtimes(J, model.x['xw'])) + model.tvp['tau1']
-                            
-    # Lagrange term 
-    mterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
+    tau = model.aux['tau']
+                       
+    # Meyer term     
+    mterm = ca.DM(0)
+    # mterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
 
-    # Meyer term
-    lterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
+    # Lagrange term 
+    lterm = ca.mtimes(tau.T, tau)
+    # lterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
 
     # Weights of diagonal elements of R matrix  
     mpc.set_rterm(
@@ -61,7 +65,7 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
         uj33=mpcparams["rterm_uj33"]
     )
 
-    mpc.set_objective(mterm=mterm, lterm=lterm)
+    mpc.set_objective(mterm=mterm, lterm=lterm) 
 
     ###################### Constraints ######################
 
@@ -81,6 +85,7 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
 
     # Nonlinear constraints  
     g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    # g *= ca.sign(model.x['xp'][0:2] - envparams["xpd"][0:2])
 
     mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
  
