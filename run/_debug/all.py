@@ -75,9 +75,9 @@ dxn = model.set_variable(var_type='_x', var_name='dxn', shape=(3,1))
 dxw = model.set_variable(var_type='_x', var_name='dxw', shape=(3,1)) 
 
 # Control variables (diagonal of inertia matrix)
-uj11 = model.set_variable(var_type='_u', var_name='uj11', shape=(1,1))
-uj22 = model.set_variable(var_type='_u', var_name='uj22', shape=(1,1))
-uj33 = model.set_variable(var_type='_u', var_name='uj33', shape=(1,1))
+u1 = model.set_variable(var_type='_u', var_name='u1', shape=(1,1))
+u2 = model.set_variable(var_type='_u', var_name='u2', shape=(1,1))
+u3 = model.set_variable(var_type='_u', var_name='u3', shape=(1,1))
 
 # Policies
 f1 = model.set_variable(var_type='_tvp', var_name='f1', shape=(3,1))
@@ -98,13 +98,13 @@ model.set_rhs('xn', dxn)
 model.set_rhs('xw', dxw)
 
 # Nonlinear ODE 
-uJ = ca.diag(ca.vertcat(uj11, uj22, uj33))
+u = ca.vertcat(u1, u2, u3)
 J = ca.diag(ca.vertcat(j11, j22, j33))
 
 eq_dxp = xv
 eq_dxv = f1/m 
 eq_dxn = ca.mtimes(xn.T, ca.skew(xw)).T  
-eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), ca.mtimes(uJ, xw)) + tau1))
+eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), u) + tau1))
 
 model.set_rhs('dxp', eq_dxp) 
 model.set_rhs('dxv', eq_dxv)
@@ -150,9 +150,9 @@ lterm = ca.mtimes(tau.T, tau)
  
 # Weights of diagonal elements of R matrix  
 mpc.set_rterm(
-    uj11=1e-2,
-    uj22=1e-2,
-    uj33=1e-2
+    u1=1e-2,
+    u2=1e-2,
+    u3=1e-2
 )
 
 mpc.set_objective(mterm=mterm, lterm=lterm)
@@ -165,13 +165,13 @@ mpc.set_objective(mterm=mterm, lterm=lterm)
 # TODO
  
 # Lower bounds on inputs:
-mpc.bounds['lower','_u', 'uj11'] = -10
-mpc.bounds['lower','_u', 'uj22'] = -10
-mpc.bounds['lower','_u', 'uj33'] = -10
+mpc.bounds['lower','_u', 'u1'] = -10
+mpc.bounds['lower','_u', 'u2'] = -10
+mpc.bounds['lower','_u', 'u3'] = -10
 # Lower bounds on inputs:
-mpc.bounds['upper','_u', 'uj11'] = 10
-mpc.bounds['upper','_u', 'uj22'] = 10
-mpc.bounds['upper','_u', 'uj33'] = 10
+mpc.bounds['upper','_u', 'u1'] = 10
+mpc.bounds['upper','_u', 'u2'] = 10
+mpc.bounds['upper','_u', 'u3'] = 10
 
 # Scaling
 # TODO
@@ -235,13 +235,13 @@ for g in [sim_graphics, mpc_graphics]:
     g.add_line(var_type='_x', var_name='xn', axis=ax1)
     g.add_line(var_type='_x', var_name='xw', axis=ax1) 
     # Plot inputs
-    g.add_line(var_type='_u', var_name='uj11', axis=ax2)
-    g.add_line(var_type='_u', var_name='uj22', axis=ax2)
-    g.add_line(var_type='_u', var_name='uj33', axis=ax2)
+    g.add_line(var_type='_u', var_name='u1', axis=ax2)
+    g.add_line(var_type='_u', var_name='u2', axis=ax2)
+    g.add_line(var_type='_u', var_name='u3', axis=ax2)
 
 
 ax1.set_ylabel('State p, v, n, w')
-ax2.set_ylabel('Inertia uJ')
+ax2.set_ylabel('Input u')
 ax2.set_xlabel('time [s]')
 
 # Simulate in closed loop

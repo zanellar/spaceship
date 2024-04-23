@@ -60,9 +60,9 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
 
     # Weights of diagonal elements of R matrix  
     mpc.set_rterm(
-        uj11=mpcparams["rterm_uj11"],
-        uj22=mpcparams["rterm_uj22"],
-        uj33=mpcparams["rterm_uj33"]
+        u1=mpcparams["rterm_u1"],
+        u2=mpcparams["rterm_u2"],
+        u3=mpcparams["rterm_u3"]
     )
 
     mpc.set_objective(mterm=mterm, lterm=lterm) 
@@ -75,17 +75,21 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     # TODO
 
     # Lower bounds on inputs:
-    mpc.bounds['lower','_u', 'uj11'] = mpcparams["lb_uj11"]
-    mpc.bounds['lower','_u', 'uj22'] = mpcparams["lb_uj22"]
-    mpc.bounds['lower','_u', 'uj33'] = mpcparams["lb_uj33"]
+    mpc.bounds['lower','_u', 'u1'] = mpcparams["lb_u1"]
+    mpc.bounds['lower','_u', 'u2'] = mpcparams["lb_u2"]
+    mpc.bounds['lower','_u', 'u3'] = mpcparams["lb_u3"]
     # Lower bounds on inputs:
-    mpc.bounds['upper','_u', 'uj11'] = mpcparams["ub_uj11"]
-    mpc.bounds['upper','_u', 'uj22'] = mpcparams["ub_uj22"]
-    mpc.bounds['upper','_u', 'uj33'] = mpcparams["ub_uj33"]
+    mpc.bounds['upper','_u', 'u1'] = mpcparams["ub_u1"]
+    mpc.bounds['upper','_u', 'u2'] = mpcparams["ub_u2"]
+    mpc.bounds['upper','_u', 'u3'] = mpcparams["ub_u3"]
 
     # Nonlinear constraints  
-    g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
-    # g *= ca.sign(model.x['xp'][0:2] - envparams["xpd"][0:2])
+    # g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    g = ca.if_else(
+        ca.norm_2(model.x['xp'][0:2]) - ca.norm_2(envparams["xpd"][0:2]) > 0, 
+        0, 
+        (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    )
 
     mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
  

@@ -30,13 +30,13 @@ class Plotter():
             g.add_line(var_type='_x', var_name='xn', axis=ax1)
             g.add_line(var_type='_x', var_name='xw', axis=ax1) 
             # Plot inputs
-            g.add_line(var_type='_u', var_name='uj11', axis=ax2)
-            g.add_line(var_type='_u', var_name='uj22', axis=ax2)
-            g.add_line(var_type='_u', var_name='uj33', axis=ax2)
+            g.add_line(var_type='_u', var_name='u1', axis=ax2)
+            g.add_line(var_type='_u', var_name='u2', axis=ax2)
+            g.add_line(var_type='_u', var_name='u3', axis=ax2)
 
 
         ax1.set_ylabel('State p, v, n, w')
-        ax2.set_ylabel('Inertia uJ')
+        ax2.set_ylabel('Control u')
         ax2.set_xlabel('time [s]')
 
     def plot(self):

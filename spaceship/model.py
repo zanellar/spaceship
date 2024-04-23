@@ -19,11 +19,11 @@ def create_model(modelparams, dt):
     xn = model.set_variable(var_type='_x', var_name='xn', shape=(3,1)) # Third column of rotation matrix
     xw = model.set_variable(var_type='_x', var_name='xw', shape=(3,1)) # Angular velocity (omega)
   
-    # Control variables (diagonal of inertia matrix)
-    uj11 = model.set_variable(var_type='_u', var_name='uj11', shape=(1,1))
-    uj22 = model.set_variable(var_type='_u', var_name='uj22', shape=(1,1))
-    uj33 = model.set_variable(var_type='_u', var_name='uj33', shape=(1,1))
-    uJ = ca.diag(ca.vertcat(uj11, uj22, uj33))
+    # Control variables 
+    u1 = model.set_variable(var_type='_u', var_name='u1', shape=(1,1))
+    u2 = model.set_variable(var_type='_u', var_name='u2', shape=(1,1))
+    u3 = model.set_variable(var_type='_u', var_name='u3', shape=(1,1))
+    u = ca.vertcat(u1, u2, u3) 
 
     # Policies
     f1 = model.set_variable(var_type='_tvp', var_name='f1', shape=(3,1))
@@ -48,7 +48,7 @@ def create_model(modelparams, dt):
         return ca.SX.eye(3) + 0.5*ca.skew(x) @ ca.inv(ca.SX.eye(3) - 0.5*ca.skew(x))
     
     # Torque
-    tau = ca.cross(uJ @ xw, xw) + tau1
+    tau = - ca.cross(xw,u) + tau1
 
     # Intermediate angular velocity 
     _w = xw + 0.5*dt*ca.inv(J) @ (tau + ca.cross(J @ xw, xw))

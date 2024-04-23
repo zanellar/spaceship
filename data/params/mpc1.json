@@ -1,21 +1,21 @@
 {
-    "ub_uj11" : 20.0,
-    "lb_uj11" : -20.0,
-    "rterm_uj11": 0 ,
+    "ub_u1" : 20.0,
+    "lb_u1" : -20.0,
+    "rterm_u1": 0 ,
 
-    "ub_uj22": 20.0,
-    "lb_uj22": -20.0,
-    "rterm_uj22": 0 ,
+    "ub_u2": 20.0,
+    "lb_u2": -20.0,
+    "rterm_u2": 0 ,
 
-    "ub_uj33": 20.0,
-    "lb_uj33": -20.0,
-    "rterm_uj33": 0.0,
+    "ub_u3": 20.0,
+    "lb_u3": -20.0,
+    "rterm_u3": 0.0,
 
     "ub_err": 1,
     "pos_weight": 200,
 
     "n_horizon": 15,
-    "t_step": 0.05,
+    "t_step": 0.1,
     "silence": true
 
 }
