@@ -35,11 +35,11 @@ with open(os.path.join(PARAMS_PATH, sys_param_file+".json")) as json_file:
     systemparams = json.load(json_file)
 
 
-# Create model, MPC and simulator
-model = create_model(modelparams)
-system = create_model(systemparams)
-mpc = create_mpc(model, void_policy, modelparams, mpcparams, envparams)
+# Create model, controller, system and simulator
+system = create_model(systemparams, dt=simparams["t_step"])
 simulator = create_simulator(system, void_policy, modelparams, simparams)
+model = create_model(modelparams, dt=mpcparams["t_step"])
+mpc = create_mpc(model, void_policy, modelparams, mpcparams, envparams)
 
 # Set initial state
 simulator.x0['xp'] = [0,0,0.5]

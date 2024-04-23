@@ -10,7 +10,7 @@
 Setup virtual environment
 
 ```
-conda env create -f space.yml
+conda env create -f environment.yml
 ```
 
 Install Package

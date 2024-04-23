@@ -10,7 +10,7 @@ from spaceship.utils.paths import RESULTS_PATH, PARAMS_PATH, PLOTS_PATH
 import matplotlib.pyplot as plt  
 
 flg_show_plots = False
-results_file_name = "controlled_2024-02-16_16-48-27"
+results_file_name = "controlled_2024-02-16_19-08-54"
  
 # Parameter file 
 env_param_file = 'env1'

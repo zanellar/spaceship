@@ -4,12 +4,10 @@ import casadi as ca
 
 
 
-def create_model(modelparams):
+def create_model(modelparams, dt):
     
     model_type = 'discrete'  
-    model = do_mpc.model.Model(model_type)
-
-    dt = modelparams["t_step"]
+    model = do_mpc.model.Model(model_type) 
 
     ###################### Variables #########################
 
