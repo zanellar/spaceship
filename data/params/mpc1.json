@@ -15,7 +15,7 @@
     "pos_weight": 200,
 
     "n_horizon": 15,
-    "t_step": 0.1,
+    "t_step": 0.05,
     "silence": true
 
 }

@@ -23,7 +23,13 @@ def create_model(modelparams, dt):
     u1 = model.set_variable(var_type='_u', var_name='u1', shape=(1,1))
     u2 = model.set_variable(var_type='_u', var_name='u2', shape=(1,1))
     u3 = model.set_variable(var_type='_u', var_name='u3', shape=(1,1))
-    u = ca.vertcat(u1, u2, u3) 
+
+    # Control input space
+    if modelparams['ctr_input'] == "Jw":
+        u = ca.diag(ca.vertcat(u1, u2, u3))
+        u = u @ xw 
+    else:
+        u = ca.vertcat(u1, u2, u3)   
 
     # Policies
     f1 = model.set_variable(var_type='_tvp', var_name='f1', shape=(3,1))
@@ -47,8 +53,8 @@ def create_model(modelparams, dt):
     def cay(x):
         return ca.SX.eye(3) + 0.5*ca.skew(x) @ ca.inv(ca.SX.eye(3) - 0.5*ca.skew(x))
     
-    # Torque
-    tau = - ca.cross(xw,u) + tau1
+    # System Input Torque
+    tau = - ca.cross(xw, u) + tau1 
 
     # Intermediate angular velocity 
     _w = xw + 0.5*dt*ca.inv(J) @ (tau + ca.cross(J @ xw, xw))

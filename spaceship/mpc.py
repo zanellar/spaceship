@@ -37,8 +37,8 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     def mpc_tvp_fun(t_now):
         ''' Return the values of the force and torque (as time-varying parameters) at the current time step '''
         for t in range(len(tvp_template['_tvp'])): 
-            tvp_template['_tvp',t,'f1'] = policy_fun(t+t_now)['f1']
-            tvp_template['_tvp',t,'tau1'] = policy_fun(t+t_now)['tau1']
+            tvp_template['_tvp',t,'f1'] = policy_fun(t+t_now, model)['f1']
+            tvp_template['_tvp',t,'tau1'] = policy_fun(t+t_now, model)['tau1']
         return tvp_template  
     mpc.set_tvp_fun(mpc_tvp_fun)
 
@@ -84,12 +84,12 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     mpc.bounds['upper','_u', 'u3'] = mpcparams["ub_u3"]
 
     # Nonlinear constraints  
-    # g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
-    g = ca.if_else(
-        ca.norm_2(model.x['xp'][0:2]) - ca.norm_2(envparams["xpd"][0:2]) > 0, 
-        0, 
-        (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
-    )
+    g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    # g = ca.if_else(
+    #     ca.norm_2(model.x['xp'][0:2]) - ca.norm_2(envparams["xpd"][0:2]) > 0, 
+    #     0, 
+    #     (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    # )
 
     mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
  

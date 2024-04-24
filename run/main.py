@@ -1,14 +1,15 @@
 import json
 import os
+import time 
 import numpy as np
+import matplotlib.pyplot as plt  
+
 from spaceship.model import create_model
 from spaceship.mpc import create_mpc
 from spaceship.sim import create_simulator
 from spaceship.visual.plot import Plotter
 from spaceship.visual.draw3d import Drone3DStopMotion
-
 from spaceship.policies import void_policy
-
 from spaceship.utils.paths import PARAMS_PATH
 
 # Choose parameter file
@@ -62,13 +63,29 @@ energy = []
 zero_work_term = []
 torques = []
 constraints = []
+opt_times = [] 
+itr_times = []
+  
+start_sim_time = time.time()
 
 for k in range(simparams["n_steps"]):  
 
     print(f"step {k}")
+    _start_opt_time = time.time()
+
+    # Solve the optimization problem
     u = mpc.make_step(x)
+
+    _end_opt_time = time.time()
     
+    # Simulate one step of the system dynamics
     x = simulator.make_step(u) 
+
+    _end_itr_time = time.time() 
+
+    # Execution times 
+    opt_times.append(_end_opt_time - _start_opt_time)
+    itr_times.append(_end_itr_time - _end_opt_time)
 
     # states
     xp = x[0:3]
@@ -94,9 +111,7 @@ for k in range(simparams["n_steps"]):
     errors.append(1-np.linalg.norm(np.dot(xn.T,np.array(envparams["xnd"]))))
     distances.append(np.linalg.norm(xp[0:2]-np.array(envparams["xpd"]).reshape((3,1))[0:2]))
 
-
-import matplotlib.pyplot as plt  
-
+ 
 # Plot the trajectories# Plot the trajectories
 fig1, ax1 = plt.subplots(figsize=(8, 8))
 fig2, ax2 = plt.subplots(figsize=(8, 8))
@@ -104,39 +119,40 @@ fig3, ax3 = plt.subplots(figsize=(8, 8))
 fig4, ax4 = plt.subplots(figsize=(8, 8))
 fig5, ax5 = plt.subplots(figsize=(8, 8))
 fig6, ax6 = plt.subplots(figsize=(8, 8))
+fig7, ax7 = plt.subplots(figsize=(8, 8))
 
 positions = np.array(positions).reshape((simparams["n_steps"],3))
 orientations = np.array(orientations).reshape((simparams["n_steps"],3)) 
 errors = np.array(errors).flatten()
 energy = np.array(energy).flatten()
-  
+
 # Plot distance of the drone to the target slit and the orientation error:
 # 1) Plot the distance & error vs time
-time_array = np.arange(simparams["n_steps"])   # Create the time array
+time_array = np.arange(simparams["n_steps"])
 ax1.plot(time_array, distances, label='distances')
 ax1.plot(time_array, errors, label='errors')
-ax1.set_xlabel('time')
-ax1.set_ylabel('distance')
+ax1.set_xlabel('step')
+ax1.set_ylabel('distance [m]')
 ax1.set_title('Distance and error vs time')
 ax1.legend()
 
 # 2) Plot the distance vs error
 ax2.plot(distances, errors ) 
-ax2.set_xlabel('distance')
+ax2.set_xlabel('distance [m]')
 ax2.set_ylabel('error')
 ax2.set_title('Error vs distance')
 ax2.legend()
 
 # Plot energy vs time
 ax3.plot(time_array, energy )
-ax3.set_xlabel('time')
+ax3.set_xlabel('step')
 ax3.set_ylabel('energy')
 ax3.set_title('Energy vs time')
 ax3.legend() 
 
 # Plot zero work term vs time
 ax4.plot(time_array, zero_work_term )
-ax4.set_xlabel('time')
+ax4.set_xlabel('step')
 ax4.set_ylabel('zero work term')
 ax4.set_title('Zero work term vs time')
 ax4.legend()
@@ -145,18 +161,27 @@ ax4.legend()
 torques = np.array(torques).reshape((simparams["n_steps"],3))
 ax5.plot(time_array, torques ) 
 # ax5.scatter(time_array, torques[:,0], label='torque1')
-ax5.set_xlabel('time')
+ax5.set_xlabel('step')
 ax5.set_ylabel('torques')
 ax5.set_title('Torques vs time')
 ax5.legend()
 
 # plot the constraints vs time
 ax6.plot(time_array, constraints )
-ax6.set_xlabel('time')
+ax6.set_xlabel('step')
 ax6.set_ylabel('constraints')
 ax6.set_title('Constraints vs time')
 ax6.legend()
 
+# plot the optimization and iteration times
+ax7.plot(time_array, opt_times, label='optimization')
+ax7.plot(time_array, itr_times, label='simulation step') 
+ax7.set_xlabel('step')
+ax7.set_ylabel('time [s]')
+
+
+end_sim_time = time.time()
+print(f"Simulation time: {end_sim_time - start_sim_time}")
 
 plt.tight_layout()
 plt.show()
