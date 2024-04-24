@@ -9,8 +9,12 @@ from spaceship.mpc import create_mpc
 from spaceship.sim import create_simulator
 from spaceship.visual.plot import Plotter
 from spaceship.visual.draw3d import Drone3DStopMotion
-from spaceship.policies import void_policy
-from spaceship.utils.paths import PARAMS_PATH
+from spaceship.visual.draw3d import Drone3DStopMotion
+
+from spaceship.visual.draw3d import Drone3DStopMotion 
+
+from spaceship.policies import void_policy  
+from spaceship.utils.paths import PARAMS_PATH, PLOTS_PATH
 
 # Choose parameter file
 model_param_file = 'model1'
@@ -37,18 +41,19 @@ with open(os.path.join(PARAMS_PATH, sys_param_file+".json")) as json_file:
 
 
 # Create model, controller, system and simulator
-system = create_model(systemparams, dt=simparams["t_step"])
+system = create_model(systemparams, dt=simparams["t_step"], settings=dict(ctr_input="Jw"))
 simulator = create_simulator(system, void_policy, modelparams, simparams)
-model = create_model(modelparams, dt=mpcparams["t_step"])
+model = create_model(modelparams, dt=mpcparams["t_step"], settings=dict(ctr_input="Jw"))
 mpc = create_mpc(model, void_policy, modelparams, mpcparams, envparams)
 
-# Set initial state
-simulator.x0['xp'] = [0,0,0.5]
-simulator.x0['xv'] = [0,0.1,0] 
-simulator.x0['xr1'] = [1,0,0]
-simulator.x0['xr2'] = [0,1,0]
-simulator.x0['xn'] = [0,0,1]
-simulator.x0['xw'] = [0.05,0.05,0.05] 
+# Set initial state 
+simulator.x0['xp'] = list(simparams["initial_position"])
+simulator.x0['xv'] = list(simparams["initial_velocity"])
+simulator.x0['xr1'] = list(simparams["initial_orientation_axis1"])
+simulator.x0['xr2'] = list(simparams["initial_orientation_axis2"])
+simulator.x0['xn'] = list(simparams["initial_orientation_axis3"])
+simulator.x0['xw'] = list(simparams["initial_angular_velocity"]) 
+
 x = simulator.x0.cat.full()
 mpc.x0 = x 
 mpc.set_initial_guess() 
@@ -65,7 +70,7 @@ torques = []
 constraints = []
 opt_times = [] 
 itr_times = []
-  
+
 start_sim_time = time.time()
 
 for k in range(simparams["n_steps"]):  
@@ -77,7 +82,7 @@ for k in range(simparams["n_steps"]):
     u = mpc.make_step(x)
 
     _end_opt_time = time.time()
-    
+
     # Simulate one step of the system dynamics
     x = simulator.make_step(u) 
 
@@ -86,6 +91,7 @@ for k in range(simparams["n_steps"]):
     # Execution times 
     opt_times.append(_end_opt_time - _start_opt_time)
     itr_times.append(_end_itr_time - _end_opt_time)
+
 
     # states
     xp = x[0:3]
@@ -111,7 +117,9 @@ for k in range(simparams["n_steps"]):
     errors.append(1-np.linalg.norm(np.dot(xn.T,np.array(envparams["xnd"]))))
     distances.append(np.linalg.norm(xp[0:2]-np.array(envparams["xpd"]).reshape((3,1))[0:2]))
 
- 
+
+end_sim_time = time.time()
+
 # Plot the trajectories# Plot the trajectories
 fig1, ax1 = plt.subplots(figsize=(8, 8))
 fig2, ax2 = plt.subplots(figsize=(8, 8))
@@ -125,34 +133,34 @@ positions = np.array(positions).reshape((simparams["n_steps"],3))
 orientations = np.array(orientations).reshape((simparams["n_steps"],3)) 
 errors = np.array(errors).flatten()
 energy = np.array(energy).flatten()
-
+  
 # Plot distance of the drone to the target slit and the orientation error:
 # 1) Plot the distance & error vs time
-time_array = np.arange(simparams["n_steps"])
+time_array = np.arange(simparams["n_steps"])   # Create the time array
 ax1.plot(time_array, distances, label='distances')
 ax1.plot(time_array, errors, label='errors')
-ax1.set_xlabel('step')
-ax1.set_ylabel('distance [m]')
+ax1.set_xlabel('time')
+ax1.set_ylabel('distance')
 ax1.set_title('Distance and error vs time')
 ax1.legend()
 
 # 2) Plot the distance vs error
 ax2.plot(distances, errors ) 
-ax2.set_xlabel('distance [m]')
+ax2.set_xlabel('distance')
 ax2.set_ylabel('error')
 ax2.set_title('Error vs distance')
 ax2.legend()
 
 # Plot energy vs time
 ax3.plot(time_array, energy )
-ax3.set_xlabel('step')
+ax3.set_xlabel('time')
 ax3.set_ylabel('energy')
 ax3.set_title('Energy vs time')
 ax3.legend() 
 
 # Plot zero work term vs time
 ax4.plot(time_array, zero_work_term )
-ax4.set_xlabel('step')
+ax4.set_xlabel('time')
 ax4.set_ylabel('zero work term')
 ax4.set_title('Zero work term vs time')
 ax4.legend()
@@ -161,39 +169,50 @@ ax4.legend()
 torques = np.array(torques).reshape((simparams["n_steps"],3))
 ax5.plot(time_array, torques ) 
 # ax5.scatter(time_array, torques[:,0], label='torque1')
-ax5.set_xlabel('step')
+ax5.set_xlabel('time')
 ax5.set_ylabel('torques')
 ax5.set_title('Torques vs time')
 ax5.legend()
 
 # plot the constraints vs time
 ax6.plot(time_array, constraints )
-ax6.set_xlabel('step')
+ax6.set_xlabel('time')
 ax6.set_ylabel('constraints')
 ax6.set_title('Constraints vs time')
 ax6.legend()
-
+ 
 # plot the optimization and iteration times
 ax7.plot(time_array, opt_times, label='optimization')
 ax7.plot(time_array, itr_times, label='simulation step') 
 ax7.set_xlabel('step')
 ax7.set_ylabel('time [s]')
-
-
-end_sim_time = time.time()
-print(f"Simulation time: {end_sim_time - start_sim_time}")
-
+ 
 plt.tight_layout()
 plt.show()
 
-# Graphics
-slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
-graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=-1, upperlimits=5)
-graphics.add_slits(slits)
-graphics.add_drone(orientations, positions)
-graphics.show()
+# Save the plots
+custom_name = str(input("Enter a custom name for the plots folder: "))
+plot_path = os.path.join(PLOTS_PATH, "main", custom_name)
+os.makedirs(plot_path, exist_ok=True)
+fig1.savefig(os.path.join(plot_path, "distance_error_vs_time.png"))
+fig2.savefig(os.path.join(plot_path, "distance_vs_error.png"))
+fig3.savefig(os.path.join(plot_path, "energy_vs_time.png"))
+fig4.savefig(os.path.join(plot_path, "zero_work_term_vs_time.png"))
+fig5.savefig(os.path.join(plot_path, "torques_vs_time.png"))
+fig6.savefig(os.path.join(plot_path, "constraints_vs_time.png"))
+fig7.savefig(os.path.join(plot_path, "opt_itr_times.png"))
 
-# # Plotting
-plotter = Plotter(mpc, simulator) 
-plotter.plot()
+
+# Graphics
+# slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
+# graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=-1, upperlimits=5)
+# graphics.add_slits(slits)
+# graphics.add_drone(orientations, positions)
+# graphics.show()
+
+# Plotting
+# plotter = Plotter(mpc, simulator) 
+# plotter.plot()
  
+
+print(f"Simulation time: {end_sim_time - start_sim_time}")

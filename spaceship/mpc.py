@@ -85,13 +85,9 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
 
     # Nonlinear constraints  
     g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
-    # g = ca.if_else(
-    #     ca.norm_2(model.x['xp'][0:2]) - ca.norm_2(envparams["xpd"][0:2]) > 0, 
-    #     0, 
-    #     (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
-    # )
+    # g *= ca.sign(model.x['xp'][0:2] - envparams["xpd"][0:2])
 
-    mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
+    # mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
  
     # Scaling
     # TODO

@@ -36,7 +36,7 @@ class Plotter():
 
 
         ax1.set_ylabel('State p, v, n, w')
-        ax2.set_ylabel('Control u')
+        ax2.set_ylabel('Inertia u')
         ax2.set_xlabel('time [s]')
 
     def plot(self):

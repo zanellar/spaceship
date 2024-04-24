@@ -98,13 +98,13 @@ model.set_rhs('xn', dxn)
 model.set_rhs('xw', dxw)
 
 # Nonlinear ODE 
-u = ca.vertcat(u1, u2, u3)
+u = ca.diag(ca.vertcat(u1, u2, u3))
 J = ca.diag(ca.vertcat(j11, j22, j33))
 
 eq_dxp = xv
 eq_dxv = f1/m 
 eq_dxn = ca.mtimes(xn.T, ca.skew(xw)).T  
-eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), u) + tau1))
+eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), ca.mtimes(u, xw)) + tau1))
 
 model.set_rhs('dxp', eq_dxp) 
 model.set_rhs('dxv', eq_dxv)
@@ -241,7 +241,7 @@ for g in [sim_graphics, mpc_graphics]:
 
 
 ax1.set_ylabel('State p, v, n, w')
-ax2.set_ylabel('Input u')
+ax2.set_ylabel('Inertia u')
 ax2.set_xlabel('time [s]')
 
 # Simulate in closed loop
