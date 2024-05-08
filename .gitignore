@@ -56,3 +56,4 @@ spaceship.egg-info
 *.pt
 *.pth
 data/plots/*
+data/results/*

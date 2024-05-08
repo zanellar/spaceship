@@ -1,0 +1,22 @@
+{
+    "ub_u1" : 10.0,
+    "lb_u1" : -10.0,
+
+    "ub_u2": 10.0,
+    "lb_u2": -10.0,
+
+    "ub_u3": 10.0,
+    "lb_u3": -10.0,
+ 
+    "pos_weight": 200,
+    "upper_bound_constraint": 0.1,
+
+    "rterm_u2": 1,
+    "rterm_u3": 1,
+    "rterm_u1": 1,
+
+    "n_horizon": 10,
+    "t_step": 0.1,
+    "silence": true 
+
+}

@@ -5,7 +5,7 @@ import json
 import os
 
 
-def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
+def create_mpc(model, modelparams, mpcparams, envparams):
 
     # Configuring the MPC controller
     mpc = do_mpc.controller.MPC(model)
@@ -31,40 +31,33 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
         p_template["_p"] = [modelparams['m'], modelparams['j11'], modelparams['j22'], modelparams['j33']]
         return p_template 
     mpc.set_p_fun(mpc_p_fun)
-
-    # Force and torque policies   
-    tvp_template = mpc.get_tvp_template() 
-    def mpc_tvp_fun(t_now):
-        ''' Return the values of the force and torque (as time-varying parameters) at the current time step '''
-        for t in range(len(tvp_template['_tvp'])): 
-            tvp_template['_tvp',t,'f1'] = policy_fun(t+t_now, model)['f1']
-            tvp_template['_tvp',t,'tau1'] = policy_fun(t+t_now, model)['tau1']
-        return tvp_template  
-    mpc.set_tvp_fun(mpc_tvp_fun)
-
+  
     ###################### Objective function ######################
-
-    # Real torque that is applied to the system 
-    # print(ca.diag(model._u))
-    # J = ca.diag(model._u)
-    # tau = ca.mtimes(ca.skew(model.x['xw']), ca.mtimes(J, model.x['xw'])) + model.tvp['tau1']
-    tau = model.aux['tau']
+ 
+    xw = model.x['xw']
+    u1 = model.u['u1']
+    u2 = model.u['u2']
+    u3 = model.u['u3']
+    u = ca.diag(ca.vertcat(u1, u2, u3))
+    u = u @ xw  
                        
     # Meyer term     
-    mterm = ca.DM(0)
-    # mterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
+    mterm = ca.DM(0) 
 
-    # Lagrange term 
-    lterm = ca.mtimes(tau.T, tau)
-    # lterm = ca.mtimes(model.x['xw'].T, model.x['xw'])
-
+    # Lagrange term  
+    # tau = model.aux['tau']
+    # lterm = ca.mtimes(tau.T, tau)
+    tau_mpc = ca.cross(u, xw)  
+    lterm = ca.mtimes(tau_mpc.T, tau_mpc)
+    # lterm = ca.DM(0)
+ 
     # Weights of diagonal elements of R matrix  
     mpc.set_rterm(
         u1=mpcparams["rterm_u1"],
         u2=mpcparams["rterm_u2"],
         u3=mpcparams["rterm_u3"]
-    )
-
+    ) 
+ 
     mpc.set_objective(mterm=mterm, lterm=lterm) 
 
     ###################### Constraints ######################
@@ -84,10 +77,14 @@ def create_mpc(model, policy_fun, modelparams, mpcparams, envparams):
     mpc.bounds['upper','_u', 'u3'] = mpcparams["ub_u3"]
 
     # Nonlinear constraints  
-    g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
-    # g *= ca.sign(model.x['xp'][0:2] - envparams["xpd"][0:2])
-
-    mpc.set_nl_cons('g', g, ub=mpcparams["ub_err"], soft_constraint=False)
+    # g = (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    g = ca.if_else(
+        ca.norm_2(model.x['xp'][0:2]) - ca.norm_2(envparams["xpd"][0:2]) > 0, 
+        0, 
+        (1 - ca.dot(model.x['xn'], envparams["xnd"])**2) / (ca.norm_2(model.x['xp'][0:2] - envparams["xpd"][0:2])**2 + 1/mpcparams["pos_weight"])
+    )
+     
+    mpc.set_nl_cons('g', g, ub=mpcparams["upper_bound_constraint"], soft_constraint=False)
  
     # Scaling
     # TODO

@@ -13,10 +13,10 @@ from spaceship.policies import void_policy
 from spaceship.utils.paths import PARAMS_PATH
 
 # Choose parameter file
-model_param_file = 'model1'
-mpc_param_file = 'mpc1'
-env_param_file = 'env1'
-sim_param_file = 'sim1'
+model_param_file = 'model_test'
+mpc_param_file = 'mpc_test'
+env_param_file = 'env_test'
+sim_param_file = 'sim_test'
 
 # Import parameters 
 with open(os.path.join(PARAMS_PATH, model_param_file+".json")) as json_file:

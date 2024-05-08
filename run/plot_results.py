@@ -13,8 +13,8 @@ flg_show_plots = False
 results_file_name = "controlled_2024-02-16_19-08-54"
  
 # Parameter file 
-env_param_file = 'env1'
-sim_param_file = 'sim1' 
+env_param_file = 'env_test'
+sim_param_file = 'sim_test' 
 
 #########################################################################################################
 #########################################################################################################

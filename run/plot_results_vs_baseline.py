@@ -27,8 +27,8 @@ else:
     baseline_file_name = [ name for name in os.listdir(res_path) if name.startswith("baseline")][int(index)]
      
 # Parameter file 
-env_param_file = 'env1'
-sim_param_file = 'sim1' 
+env_param_file = 'env_test'
+sim_param_file = 'sim_test' 
   
 #########################################################################################################
 #########################################################################################################

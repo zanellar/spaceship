@@ -1,0 +1,34 @@
+{ 
+    "n_steps": 1000,
+    "t_step": 0.05, 
+
+    "initial_position":             [0,0,0.5],
+    "initial_velocity":             [0,0.1,0],
+    "initial_orientation_axis1":    [1,0,0],
+    "initial_orientation_axis2":    [0,1,0],
+    "initial_orientation_axis3":    [0,0,1],
+    "initial_angular_velocity":     [0.15,-0.2,0.25],
+
+    "target_pos":                   [0,4,0.5],
+    "target_rot":                   [[-0.707,0,0.707],
+                                     [0,1,0],
+                                     [-0.707,0,-0.707]],
+
+    "ctr_input_type": "Jw",
+    "disable_mpc": false,
+    "disable_nominal_control": false, 
+
+    "params_ctrl_pos": {
+        "policy_func": "PosPDControl",
+        "Kp": 0,
+        "Kd": 0 
+    },
+    "params_ctrl_rot": { 
+        "policy_func": "GeomRotPDControl",
+        "Kd": 0.3,
+        "g1": 0.1,
+        "g2": 0.1,
+        "g3": 0.1
+    }
+ 
+}

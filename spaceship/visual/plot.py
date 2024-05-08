@@ -38,6 +38,8 @@ class Plotter():
         ax1.set_ylabel('State p, v, n, w')
         ax2.set_ylabel('Inertia u')
         ax2.set_xlabel('time [s]')
+        ax1.legend()
+        ax2.legend()
 
     def plot(self):
         self.sim_graphics.plot_results() 

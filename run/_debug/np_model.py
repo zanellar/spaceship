@@ -31,10 +31,10 @@ angles = [rotmat2euler(normal2rotmat(n0))]
 p, n, v, omega = p0, n0, v0, omega0
 
 # Compute the forces and torques
-def f1(t):
+def f_nominal(t):
     return np.array([0, 0, 0])
 
-def tau1(t):
+def tau_nominal(t):
     return np.array([0, 0, 0])
 
 def J1(t):
@@ -53,8 +53,8 @@ for t in range(num_steps):
     R = normal2rotmat(n)
 
     # Compute the forces and torques 
-    f = m*g*R.T@e3 + f1(t) 
-    tau = - omega_skew @ J1(t) @ omega + tau1(t)
+    f = m*g*R.T@e3 + f_nominal(t) 
+    tau = - omega_skew @ J1(t) @ omega + tau_nominal(t)
     
     print(f" tau = {tau}, omega = {omega}")
     

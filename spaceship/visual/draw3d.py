@@ -89,6 +89,8 @@ class Drone3DStopMotion:
         @ upperlimits: list of upper limits for the axes
         """
         self.skipframes = skipframes
+        
+        self.fig = plt.figure(figsize=(10, 10))
 
         self.ax = plt.axes(projection = '3d') #Create axes
 
@@ -154,17 +156,40 @@ class Drone3DStopMotion:
             end_point = center + length * normal
             self.ax.plot3D([center[0], end_point[0]], [center[1], end_point[1]], [center[2], end_point[2]], color=color_normal, alpha=alpha_normal)
 
-    def show(self):
-        """
-        Shows the scene in a 3D plot.
-        """
-        if self.lowerlimits is not None and self.upperlimits is not None:
-            self.axlim = [self.lowerlimits, self.upperlimits] 
-        self.ax.set_xlim3d(self.axlim[0], self.axlim[1])
-        self.ax.set_ylim3d(self.axlim[0], self.axlim[1])
-        self.ax.set_zlim3d(self.axlim[0], self.axlim[1])
+    def _set_limits(self): 
+        if self.lowerlimits is not None and self.upperlimits is not None:  
+            if type(self.lowerlimits) == list and type(self.upperlimits) == list:
+                self.ax.set_xlim3d(self.lowerlimits[0], self.upperlimits[0])
+                self.ax.set_ylim3d(self.lowerlimits[1], self.upperlimits[1])
+                self.ax.set_zlim3d(self.lowerlimits[2], self.upperlimits[2])
+            elif type(self.lowerlimits) in [int, float] and type(self.upperlimits) in [int, float]:
+                self.ax.set_xlim3d(self.lowerlimits, self.upperlimits)
+                self.ax.set_ylim3d(self.lowerlimits, self.upperlimits)
+                self.ax.set_zlim3d(self.lowerlimits, self.upperlimits)
+            else:
+                raise ValueError("lowerlimits and upperlimits must be lists or numbers")
+        
+    def viz(self, show=True, save=False, path=None, camera=None): 
 
-        plt.show()
+        # Set the limits of the axes
+        self._set_limits() 
+
+        # Make the axes equally spaced
+        self.ax.set_box_aspect([1.0, 1.0, 1.0])
+        set_axes_equal(self.ax)
+
+        plt.tight_layout()
+ 
+        # change the camera angle
+        if camera is not None:
+            self.ax.view_init(*camera)
+        else:
+            self.ax.view_init(30, 30)
+
+        if save:
+            plt.savefig(path)
+        if show:
+            plt.show()
 
 
 

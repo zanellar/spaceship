@@ -6,7 +6,7 @@ import json
 
 from spaceship.utils.paths import PARAMS_PATH
 
-def create_simulator(model, policy_fun, modelparams, simparams):
+def create_simulator(model, modelparams, simparams):
         
     simulator = do_mpc.simulator.Simulator(model) 
     simulator.set_param(t_step = simparams['t_step'])
@@ -21,15 +21,6 @@ def create_simulator(model, policy_fun, modelparams, simparams):
         p_template['j33'] = modelparams['j33']
         return p_template 
     simulator.set_p_fun(sim_p_fun)
-
-    # Force and torque policies   
-    tvp_template = simulator.get_tvp_template()     
-    def sim_tvp_fun(t_now):
-        ''' Return the values of the force and torque (as time-varying parameters) at the current time step '''
-        tvp_template['f1'] = policy_fun(t_now, model)['f1']
-        tvp_template['tau1'] = policy_fun(t_now, model)['tau1']
-        return tvp_template 
-    simulator.set_tvp_fun(sim_tvp_fun)
  
     simulator.setup()
     return simulator

@@ -20,8 +20,8 @@ def get_model_parameters():
 
 def get_policy_val(t_now):
     return dict(
-        f1 = np.array([0,0,0]),        # TODO here we can define the policy as a function of time
-        tau1 = np.array([0,0,0]),
+        f_nominal = np.array([0,0,0]),        # TODO here we can define the policy as a function of time
+        tau_nominal = np.array([0,0,0]),
     )
 
 ###################################################
@@ -37,8 +37,8 @@ def sim_p_fun(t_now):
 
 def sim_tvp_fun(t_now):
     ''' Return the values of the force and torque (as time-varying parameters) at the current time step '''
-    tvp_template['f1'] = get_policy_val(t_now)['f1']
-    tvp_template['tau1'] = get_policy_val(t_now)['tau1']
+    tvp_template['f_nominal'] = get_policy_val(t_now)['f_nominal']
+    tvp_template['tau_nominal'] = get_policy_val(t_now)['tau_nominal']
     return tvp_template 
 
 def mpc_p_fun(t_now): 
@@ -50,8 +50,8 @@ def mpc_p_fun(t_now):
 def mpc_tvp_fun(t_now):
     ''' Return the values of the force and torque (as time-varying parameters) at the current time step '''
     for t in range(len(tvp_template['_tvp'])): 
-        tvp_template['_tvp',t,'f1'] = get_policy_val(t+t_now)['f1']
-        tvp_template['_tvp',t,'tau1'] = get_policy_val(t+t_now)['tau1']
+        tvp_template['_tvp',t,'f_nominal'] = get_policy_val(t+t_now)['f_nominal']
+        tvp_template['_tvp',t,'tau_nominal'] = get_policy_val(t+t_now)['tau_nominal']
     return tvp_template 
 
 
@@ -80,8 +80,8 @@ u2 = model.set_variable(var_type='_u', var_name='u2', shape=(1,1))
 u3 = model.set_variable(var_type='_u', var_name='u3', shape=(1,1))
 
 # Policies
-f1 = model.set_variable(var_type='_tvp', var_name='f1', shape=(3,1))
-tau1 = model.set_variable(var_type='_tvp', var_name='tau1', shape=(3,1))
+f_nominal = model.set_variable(var_type='_tvp', var_name='f_nominal', shape=(3,1))
+tau_nominal = model.set_variable(var_type='_tvp', var_name='tau_nominal', shape=(3,1))
 
 # Parameters
 j11 = model.set_variable(var_type='_p', var_name='j11', shape=(1,1)) 
@@ -102,9 +102,9 @@ u = ca.diag(ca.vertcat(u1, u2, u3))
 J = ca.diag(ca.vertcat(j11, j22, j33))
 
 eq_dxp = xv
-eq_dxv = f1/m 
+eq_dxv = f_nominal/m 
 eq_dxn = ca.mtimes(xn.T, ca.skew(xw)).T  
-eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), ca.mtimes(u, xw)) + tau1))
+eq_dxw = ca.mtimes(ca.inv(J), (- ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) - ca.mtimes(ca.skew(xw), ca.mtimes(u, xw)) + tau_nominal))
 
 model.set_rhs('dxp', eq_dxp) 
 model.set_rhs('dxv', eq_dxv)
@@ -139,7 +139,7 @@ mpc.set_tvp_fun(mpc_tvp_fun)
 
 # Real torque that is applied to the system
 J = ca.diag(ca.vertcat(j11, j22, j33))
-tau = ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) + tau1
+tau = ca.mtimes(ca.skew(xw), ca.mtimes(J, xw)) + tau_nominal
 
 # Lagrange term 
 mterm = ca.mtimes(tau.T, tau)
