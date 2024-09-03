@@ -136,6 +136,7 @@ target_position_errors = []
 start_sim_time = time.time()
 
 for k in range(simparams["n_steps"]):  
+# for k in range(80):  
 
     print(f"step {k}")
     _start_opt_time = time.time()
@@ -187,7 +188,7 @@ for k in range(simparams["n_steps"]):
     orientations.append(xn) 
 
     # Orientation error and distance wrt to the target slit
-    slit_orientation_errors.append(1-np.linalg.norm(np.dot(xn.T,np.array(envparams["xnd"]))))
+    slit_orientation_errors.append(1-np.linalg.norm(np.dot(xn.T,np.array(envparams["xnd"])))) # linalg.norm is for the body symmetry
     slit_distances.append(np.linalg.norm(xp[0:2]-np.array(envparams["xpd"]).reshape((3,1))[0:2]))
     
     # Target orientation and position errors
@@ -202,13 +203,13 @@ end_sim_time = time.time()
 
 # Plot the trajectories# Plot the trajectories
 fig1, ax1 = plt.subplots(figsize=(8, 8))
-fig2, ax2 = plt.subplots(figsize=(8, 8))
+# fig2, ax2 = plt.subplots(figsize=(8, 8))
 fig3, ax3 = plt.subplots(figsize=(8, 8))
 fig4, ax4 = plt.subplots(figsize=(8, 8))
-fig5, ax5 = plt.subplots(figsize=(8, 8))
+# fig5, ax5 = plt.subplots(figsize=(8, 8))
 fig6, ax6 = plt.subplots(figsize=(8, 8))
-fig7, ax7 = plt.subplots(figsize=(8, 8))
-fig8, ax8 = plt.subplots(figsize=(8, 8))
+# fig7, ax7 = plt.subplots(figsize=(8, 8))
+# fig8, ax8 = plt.subplots(figsize=(8, 8))
 
 positions = np.array(positions).reshape((simparams["n_steps"],3))
 orientations = np.array(orientations).reshape((simparams["n_steps"],3)) 
@@ -227,12 +228,12 @@ ax1.set_ylabel('distance')
 ax1.set_title('Distance and error vs time')
 ax1.legend()
 
-# 2) Plot the distance vs error
-ax2.plot(slit_distances, slit_orientation_errors ) 
-ax2.set_xlabel('distance')
-ax2.set_ylabel('error')
-ax2.set_title('Error vs distance')
-ax2.legend()
+# # 2) Plot the distance vs error
+# ax2.plot(slit_distances, slit_orientation_errors ) 
+# ax2.set_xlabel('distance')
+# ax2.set_ylabel('error')
+# ax2.set_title('Error vs distance')
+# ax2.legend()
 
 # Plot total_energy vs time
 ax3.plot(time_array, total_energy, label='total_energy' )
@@ -250,14 +251,14 @@ ax4.set_ylabel('zero work term')
 ax4.set_title('Zero work term vs time')
 ax4.legend()
 
-# plot the torque vs time
-torques = np.array(torques).reshape((simparams["n_steps"],3))
-ax5.plot(time_array, torques ) 
-# ax5.scatter(time_array, torques[:,0], label='torque1')
-ax5.set_xlabel('time')
-ax5.set_ylabel('torques')
-ax5.set_title('Torques vs time')
-ax5.legend()
+# # plot the torque vs time
+# torques = np.array(torques).reshape((simparams["n_steps"],3))
+# ax5.plot(time_array, torques ) 
+# # ax5.scatter(time_array, torques[:,0], label='torque1')
+# ax5.set_xlabel('time')
+# ax5.set_ylabel('torques')
+# ax5.set_title('Torques vs time')
+# ax5.legend()
 
 # plot the constraints vs time
 ax6.plot(time_array, constraints )
@@ -266,19 +267,19 @@ ax6.set_ylabel('constraints')
 ax6.set_title('Constraints vs time')
 ax6.legend()
  
-# plot the optimization and iteration times
-ax7.plot(time_array, opt_times, label='optimization')
-ax7.plot(time_array, itr_times, label='simulation step') 
-ax7.set_xlabel('step')
-ax7.set_ylabel('time [s]')
+# # plot the optimization and iteration times
+# ax7.plot(time_array, opt_times, label='optimization')
+# ax7.plot(time_array, itr_times, label='simulation step') 
+# ax7.set_xlabel('step')
+# ax7.set_ylabel('time [s]')
 
-# plot the orientation and position slit_orientation_errors
-ax8.plot(time_array, target_orientation_errors, label='orientation error')
-# ax8.plot(time_array, target_position_errors, label='position error')
-ax8.set_xlabel('step')
-ax8.set_ylabel('error')
-ax8.set_title('Orientation and position slit_orientation_errors')
-ax8.legend()
+# # plot the orientation and position slit_orientation_errors
+# ax8.plot(time_array, target_orientation_errors, label='orientation error')
+# # ax8.plot(time_array, target_position_errors, label='position error')
+# ax8.set_xlabel('step')
+# ax8.set_ylabel('error')
+# ax8.set_title('Orientation and position slit_orientation_errors')
+# ax8.legend()
  
 plt.tight_layout()
 plt.show()
@@ -288,12 +289,12 @@ custom_name = str(input("Enter a custom name for the plots folder: "))
 plot_path = os.path.join(PLOTS_PATH, "main", custom_name)
 os.makedirs(plot_path, exist_ok=True)
 fig1.savefig(os.path.join(plot_path, "distance_error_vs_time.png"))
-fig2.savefig(os.path.join(plot_path, "distance_vs_error.png"))
+# fig2.savefig(os.path.join(plot_path, "distance_vs_error.png"))
 fig3.savefig(os.path.join(plot_path, "energy_vs_time.png"))
 fig4.savefig(os.path.join(plot_path, "zero_work_term_vs_time.png"))
-fig5.savefig(os.path.join(plot_path, "torques_vs_time.png"))
+# fig5.savefig(os.path.join(plot_path, "torques_vs_time.png"))
 fig6.savefig(os.path.join(plot_path, "constraints_vs_time.png"))
-fig7.savefig(os.path.join(plot_path, "opt_itr_times.png"))
+# fig7.savefig(os.path.join(plot_path, "opt_itr_times.png"))
 
 
 ####################################################################  
@@ -304,17 +305,22 @@ graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=[-
 graphics.add_slits(slits)
 graphics.add_drone(orientations, positions)
 graphics.viz(
-    show=True, 
+    # show=True, 
     # save=True, 
-    # path=os.path.join(plot_path, "3d_simulation.png"), 
+    # path=os.path.join(plot_path, "3d_simulation.gif"), 
     camera=(30, 30)
+)
+graphics.animate( 
+    orientations=orientations, 
+    positions=positions, 
+    interval=500
 )
 
 ####################################################################  
 
-# Plotting
-plotter = Plotter(mpc, simulator) 
-plotter.plot()
+# # Plotting
+# plotter = Plotter(mpc, simulator) 
+# plotter.plot()
  
 
 print(f"Simulation time: {end_sim_time - start_sim_time}")

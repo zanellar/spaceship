@@ -162,7 +162,7 @@ def run_and_save(modelparams, mpcparams, envparams, simparams, systemparams, sav
         orientations.append(xn) 
 
         # Orientation error and distance wrt to the target slit
-        slit_orientation_errors.append(1-np.linalg.norm(np.dot(xn.T,np.array(envparams["xnd"]))))
+        slit_orientation_errors.append(1-np.linalg.norm(np.dot(xn.T,np.array(envparams["xnd"])))) # linalg.norm is for the body symmetry
         slit_distances.append(np.linalg.norm(xp[0:2]-np.array(envparams["xpd"]).reshape((3,1))[0:2]))
         
         # Target orientation and position errors

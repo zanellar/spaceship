@@ -7,7 +7,7 @@ import casadi as ca
 def create_model(modelparams, dt, settings=None, external_functions=None):
     
     model_type = 'discrete'  
-    model = do_mpc.model.Model(model_type) 
+    model = do_mpc.model.Model(model_type)
 
     ###################### Variables #########################
 

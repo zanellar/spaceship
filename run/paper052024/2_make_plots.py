@@ -14,7 +14,7 @@ from spaceship.visual.draw3d import Drone3DStopMotion
 from spaceship.policies import *
 from spaceship.utils.paths import PARAMS_PATH, PLOTS_PATH, RESULTS_PATH
 
-
+save_plots_file_extension = "pdf"
 paperid = "paper052024"
 
 results_folder_path = os.listdir(os.path.join(RESULTS_PATH, paperid))
@@ -66,7 +66,7 @@ for results_file_name in results_folder_path:
 
     # Plot the trajectories# Plot the trajectories
     fig1, ax1 = plt.subplots(figsize=(8, 4))
-    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    # fig2, ax2 = plt.subplots(figsize=(8, 4))
     fig3, ax3 = plt.subplots(figsize=(8, 4)) 
 
     positions = np.array(positions).reshape((simparams["n_steps"],3))
@@ -85,12 +85,12 @@ for results_file_name in results_folder_path:
     # ax1.set_title('Distance and error vs time')
     ax1.legend()
 
-    # Plot the distance vs error
-    ax2.plot(slit_distances, slit_orientation_errors ) 
-    ax2.set_xlabel('distance [m]')
-    ax2.set_ylabel('error')
-    # ax2.set_title('Error vs distance')
-    ax2.legend()
+    # # Plot the distance vs error
+    # ax2.plot(slit_distances, slit_orientation_errors ) 
+    # ax2.set_xlabel('distance [m]')
+    # ax2.set_ylabel('error')
+    # # ax2.set_title('Error vs distance')
+    # ax2.legend()
 
     # Plot total_energy vs time
     ax3.plot(time_array, kinetic_energy, label='Kinetic')
@@ -125,9 +125,9 @@ for results_file_name in results_folder_path:
     custom_name = results_file_name.split("results_paper_")[-1].split(".json")[0]
     plot_path = os.path.join(PLOTS_PATH, paperid, custom_name)
     os.makedirs(plot_path, exist_ok=True)
-    fig1.savefig(os.path.join(plot_path, "distance_error_vs_time.png"))
-    # fig2.savefig(os.path.join(plot_path, "distance_vs_error.png"))
-    fig3.savefig(os.path.join(plot_path, "energy_vs_time.png")) 
+    fig1.savefig(os.path.join(plot_path, f"distance_error_vs_time.{save_plots_file_extension}"))
+    # fig2.savefig(os.path.join(plot_path, f"distance_vs_error.{save_plots_file_extension}"))
+    fig3.savefig(os.path.join(plot_path, f"energy_vs_time.{save_plots_file_extension}")) 
 
     pl.dump(fig1, open(os.path.join(plot_path, "distance_error_vs_time.pickle"),'wb'))
     # pl.dump(fig2, open(os.path.join(plot_path, "distance_vs_error.pickle"),'wb'))
@@ -137,16 +137,17 @@ for results_file_name in results_folder_path:
 
     ####################################################################  
     
-    angles = [80, 70, 60, 50, 40, 30, 15, 0, -15, -30, -40, -50, -60, -70, -80] 
+    # angles = [80, 70, 60, 50, 40, 30, 15, 0, -15, -30, -40, -50, -60, -70, -80] 
+    angles = [-60] 
     for angle in angles:
         # Graphics
         slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
-        graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=[-1,-1,-1], upperlimits=[1,6,1])
+        graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=[-1,-1,-1], upperlimits=[1,3,1])
         graphics.add_slits(slits)
         graphics.add_drone(orientations, positions)
         graphics.viz(
-            show=False, 
+            show=True, 
             save=True, 
-            path=os.path.join(plot_path, f"3d_simulation_{angle}.png"), 
+            path=os.path.join(plot_path, f"3d_simulation_{angle}.{save_plots_file_extension}"), 
             camera=(10, angle)
         ) 

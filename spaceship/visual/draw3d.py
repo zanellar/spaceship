@@ -3,10 +3,11 @@ import numpy as np
 from matplotlib.patches import Circle, Rectangle 
 import matplotlib.pyplot as plt
 
+from matplotlib.animation import FuncAnimation
 from spaceship.utils.ops import normal2rotmat
 
 #https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
- 
+
 
 def pathpatch_2d_to_3d(pathpatch, z = 0, normal = 'z'):
     """
@@ -105,21 +106,59 @@ class Drone3DStopMotion:
         # Make the axes equally spaced
         self.ax.set_box_aspect([1.0, 1.0, 1.0])
         set_axes_equal(self.ax)
-    
-    def add_slits(self,slits, color='g', alpha=0.5):
+            
+    # def add_slits(self,slits, color='g', alpha=0.5):
+    #     """
+    #     Adds slits to the scene
+    #     @ slits: list of dicts with keys "height", "width", "position"
+    #     """
+
+    #     for slit in slits: 
+    #         rect = Rectangle((0, 0), slit["width"], slit["height"], facecolor=color, alpha=alpha)
+    #         self.ax.add_patch(rect)
+    #         x_pos = slit["position"][0] - slit["width"]/2
+    #         y_pos = slit["position"][1]
+    #         z_pos = slit["position"][2] + slit["height"]/2
+    #         pathpatch_2d_to_3d(rect, z=z_pos, normal='y')
+    #         pathpatch_translate(rect, delta=[x_pos, y_pos, z_pos]) 
+
+    def add_slits(self, slits, color='k', alpha=0.2, negative=False):
         """
         Adds slits to the scene
         @ slits: list of dicts with keys "height", "width", "position"
-        """
+        """ 
+        if negative: 
+            for slit in slits: 
+                rect = Rectangle((0, 0), slit["width"], slit["height"], facecolor=color, alpha=alpha)
+                self.ax.add_patch(rect)
+                x_pos = slit["position"][0] - slit["width"]/2
+                y_pos = slit["position"][1]
+                z_pos = slit["position"][2] + slit["height"]/2
+                pathpatch_2d_to_3d(rect, z=z_pos, normal='y')
+                pathpatch_translate(rect, delta=[x_pos, y_pos, z_pos]) 
+        else:
+            for slit in slits:
+                # Use a large value for the width to simulate 'unbounded' sides
+                extended_width = 5  # Adjust this value as needed to fit the figure's scale
+                extended_height = 5  # Extend the height
 
-        for slit in slits: 
-            rect = Rectangle((0, 0), slit["width"], slit["height"], facecolor=color, alpha=alpha)
-            self.ax.add_patch(rect)
-            x_pos = slit["position"][0] - slit["width"]/2
-            y_pos = slit["position"][1]
-            z_pos = slit["position"][2] + slit["height"]/2
-            pathpatch_2d_to_3d(rect, z=z_pos, normal='y')
-            pathpatch_translate(rect, delta=[x_pos, y_pos, z_pos])
+                # Calculate positions for the two rectangles, ensuring the slit remains in the middle
+                x_pos_left = slit["position"][0] - slit["width"]/2 - extended_width
+                x_pos_right = slit["position"][0] + slit["width"]/2  
+                y_pos = slit["position"][1]
+                z_pos = extended_height/4
+
+                # Create and add the left rectangle
+                rect_left = Rectangle((0, 0), extended_width, extended_height, facecolor=color, alpha=alpha)
+                self.ax.add_patch(rect_left)
+                pathpatch_2d_to_3d(rect_left, z=z_pos, normal='y')
+                pathpatch_translate(rect_left, delta=[x_pos_left, y_pos, z_pos])
+
+                # Create and add the right rectangle
+                rect_right = Rectangle((0, 0), extended_width, extended_height, facecolor=color, alpha=alpha)
+                self.ax.add_patch(rect_right)
+                pathpatch_2d_to_3d(rect_right, z=z_pos, normal='y')
+                pathpatch_translate(rect_right, delta=[x_pos_right, y_pos, z_pos])
 
     def add_drone(self, orientations, positions, color_disk='b', alpha_disk=0.5, color_normal='r', alpha_normal=0.5):
         """
@@ -192,6 +231,46 @@ class Drone3DStopMotion:
             plt.show()
 
 
+    def animate(self, orientations, positions, interval=500, show=True):
+        """
+        Creates an animation showing and then deleting each drone given by its position and orientation.
+
+        @ orientations: list of orientations (normal vectors)
+        @ positions: list of positions (3D vectors)
+        @ interval: time interval between frames in milliseconds
+        """
+        fig = self.fig
+        ax = self.ax
+
+        # Ensure orientations and positions are numpy arrays for easier handling
+        orientations = np.asarray(orientations).reshape(-1, 3)
+        positions = np.asarray(positions).reshape(-1, 3)
+
+        # Validation to ensure equal number of orientations and positions
+        if orientations.shape[0] != positions.shape[0]:
+            raise ValueError("orientations and positions must have the same length")
+
+        # Define the update function for the animation
+        def update(frame):
+            ax.clear()  # Clear previous frame
+            self._set_limits()  # Reset limits since ax.clear() also clears limits
+            self.ax.set_box_aspect([1.0, 1.0, 1.0])  # Maintain aspect ratio
+            set_axes_equal(ax)  # Equal axes for 3D plot
+            # Plot reference frame
+            ax.quiver(*self.origin, *self.x_axis, color='k', label='X-axis', alpha=0.2)
+            ax.quiver(*self.origin, *self.y_axis, color='k', label='Y-axis', alpha=0.2)
+            ax.quiver(*self.origin, *self.z_axis, color='k', label='Z-axis', alpha=0.2)
+            # Add drone for current frame
+            self.add_drone([orientations[frame]], [positions[frame]])
+
+        # Create the animation
+        anim = FuncAnimation(fig, update, frames=len(positions), interval=interval, blit=False)
+
+        # Show the animation
+        if show:
+            plt.show()
+
+        return anim        
 
 ############################################################################
 ############################################################################
@@ -200,11 +279,11 @@ class Drone3DStopMotion:
 
 if __name__ == '__main__':
 
-    visualizer = Drone3DStopMotion()
+    visualizer = Drone3DStopMotion(lowerlimits=[-1,-1,-1], upperlimits=[1,6,1])
 
     slits = [
-        dict(height=3, width=0.2, position=(0, 1.2)),
-        dict(height=3, width=0.2, position=(0, 1.6)) 
+        dict(height=3, width=0.2, position=(0, 0, 0)),
+        # dict(height=3, width=0.2, position=(0, 1.6, 0)) 
              ]
     
     visualizer.add_slits(slits)
@@ -217,4 +296,11 @@ if __name__ == '__main__':
 
     visualizer.add_drone(rotations, translations)
 
-    visualizer.show()
+    visualizer.viz(
+        # show=True, 
+        # save=True, 
+        # path=os.path.join(plot_path, "3d_simulation.gif"), 
+        camera=(30, 30)
+    )
+
+    plt.show()
