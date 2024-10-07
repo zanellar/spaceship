@@ -202,12 +202,12 @@ class Drone3DStopMotion:
             # self.ax.plot3D([center[0], end_point[0]], [center[1], end_point[1]], [center[2], end_point[2]], color=color_normal, alpha=alpha_normal) 
 
             # Draw the normal vector as an arrow
-            center = circle._segment3d.mean(axis=0)  # Calculate the mean of the vertices
-            normal /= np.linalg.norm(normal)  # Make sure the vector is normalized
-            length = 0.3  # Length of the normal arrow
-            self.ax.quiver(center[0], center[1], center[2], 
-                        normal[0], normal[1], normal[2], 
-                        length=length, normalize=True, color=color_normal, alpha=alpha_normal)
+            # center = circle._segment3d.mean(axis=0)  # Calculate the mean of the vertices
+            # normal /= np.linalg.norm(normal)  # Make sure the vector is normalized
+            # length = 0.3  # Length of the normal arrow
+            # self.ax.quiver(center[0], center[1], center[2], 
+            #             normal[0], normal[1], normal[2], 
+            #             length=length, normalize=True, color=color_normal, alpha=alpha_normal)
               
 
     def _set_limits(self): 
@@ -223,7 +223,7 @@ class Drone3DStopMotion:
             else:
                 raise ValueError("lowerlimits and upperlimits must be lists or numbers")
         
-    def viz(self, show=True, save=False, path=None, camera=None, pad_inches=-0.1): 
+    def viz(self, show=True, save=False, path=None, camera=None): 
 
         # Set the limits of the axes
         self._set_limits() 
@@ -232,14 +232,16 @@ class Drone3DStopMotion:
         self.ax.set_box_aspect([1.0, 1.0, 1.0])
         set_axes_equal(self.ax)
 
+        plt.tight_layout()
+ 
         # change the camera angle
         if camera is not None:
             self.ax.view_init(*camera)
         else:
             self.ax.view_init(30, 30)
-             
+
         if save:
-            plt.savefig(path, bbox_inches='tight',pad_inches=pad_inches)
+            plt.savefig(path)
         if show:
             plt.show()
 

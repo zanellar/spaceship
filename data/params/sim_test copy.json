@@ -2,7 +2,7 @@
     "n_steps": 1000,
     "t_step": 0.05, 
 
-    "initial_position":             [0,0,0.5],
+    "initial_position":             [0,0,0],
     "initial_velocity":             [0,0.1,0],
     "initial_orientation_axis1":    [1,0,0],
     "initial_orientation_axis2":    [0,1,0],

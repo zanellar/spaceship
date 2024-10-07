@@ -68,6 +68,7 @@ for results_file_name in results_folder_path:
     fig1, ax1 = plt.subplots(figsize=(8, 4))
     # fig2, ax2 = plt.subplots(figsize=(8, 4))
     fig3, ax3 = plt.subplots(figsize=(8, 4)) 
+    fig5, ax5 = plt.subplots(figsize=(8, 8))
 
     positions = np.array(positions).reshape((simparams["n_steps"],3))
     orientations = np.array(orientations).reshape((simparams["n_steps"],3)) 
@@ -117,6 +118,16 @@ for results_file_name in results_folder_path:
     # ax3.set_title('Energy vs time')
     ax3.legend() 
     
+
+    # plot the torque vs time
+    torques = np.array(torques).reshape((simparams["n_steps"],3))
+    ax5.plot(time_array, torques ) 
+    # ax5.scatter(time_array, torques[:,0], label='torque1')
+    ax5.set_xlabel('time')
+    ax5.set_ylabel('torques')
+    ax5.set_title('Torques vs time')
+    ax5.legend()
+
     
     plt.tight_layout()
     # plt.show()
@@ -125,13 +136,15 @@ for results_file_name in results_folder_path:
     custom_name = results_file_name.split("results_paper_")[-1].split(".json")[0]
     plot_path = os.path.join(PLOTS_PATH, paperid, custom_name)
     os.makedirs(plot_path, exist_ok=True)
-    fig1.savefig(os.path.join(plot_path, f"distance_error_vs_time.{save_plots_file_extension}"))
-    # fig2.savefig(os.path.join(plot_path, f"distance_vs_error.{save_plots_file_extension}"))
-    fig3.savefig(os.path.join(plot_path, f"energy_vs_time.{save_plots_file_extension}")) 
+    fig1.savefig(os.path.join(plot_path, f"distance_error_vs_time.{save_plots_file_extension}"), bbox_inches='tight',pad_inches=0.05)
+    # fig2.savefig(os.path.join(plot_path, f"distance_vs_error.{save_plots_file_extension}"), bbox_inches='tight',pad_inches=0.05)
+    fig3.savefig(os.path.join(plot_path, f"energy_vs_time.{save_plots_file_extension}"), bbox_inches='tight',pad_inches=0.05) 
+    fig5.savefig(os.path.join(plot_path, f"torques_vs_time.{save_plots_file_extension}"), bbox_inches='tight',pad_inches=0.05)
 
-    pl.dump(fig1, open(os.path.join(plot_path, "distance_error_vs_time.pickle"),'wb'))
+    # pl.dump(fig1, open(os.path.join(plot_path, "distance_error_vs_time.pickle"),'wb'))
     # pl.dump(fig2, open(os.path.join(plot_path, "distance_vs_error.pickle"),'wb'))
-    pl.dump(fig3, open(os.path.join(plot_path, "energy_vs_time.pickle"),'wb'))
+    # pl.dump(fig3, open(os.path.join(plot_path, "energy_vs_time.pickle"),'wb'))
+    # pl.dump(fig5, open(os.path.join(plot_path, "torques_vs_time.pickle"),'wb'))
 
 
 
@@ -141,13 +154,28 @@ for results_file_name in results_folder_path:
     angles = [-60] 
     for angle in angles:
         # Graphics
-        slits = [dict(height=3, width=0.2, position=envparams["xpd"])]
-        graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//20, lowerlimits=[-1,-1,-1], upperlimits=[1,3,1])
-        graphics.add_slits(slits)
-        graphics.add_drone(orientations, positions)
+        slits = [dict(height=3, width=0.2, position=envparams["xpd"])] 
+        graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//10, lowerlimits=[-1.2,0.25,-1.2], upperlimits=[1.8,3.25,1.8])
+        graphics.add_slits(slits, color='k', alpha=0.3, negative=False, extended_width=2, extended_height=3)
+        graphics.add_drone(orientations, positions, color_disk='#4285f4', alpha_disk=0.5, color_normal='r', alpha_normal=0.5)
         graphics.viz(
-            show=True, 
+            show=False, 
             save=True, 
             path=os.path.join(plot_path, f"3d_simulation_{angle}.{save_plots_file_extension}"), 
-            camera=(10, angle)
+            camera=(15, angle)
+        ) 
+
+    angles = [-90] 
+    for angle in angles:
+        # Graphics
+        slits = [dict(height=3, width=0.2, position=envparams["xpd"])] 
+        graphics = Drone3DStopMotion(skipframes=simparams["n_steps"]//10, lowerlimits=[-2,-.5,-1.2], upperlimits=[2,5,1.8])
+        graphics.add_slits(slits, color='k', alpha=0.3, negative=False, extended_width=2, extended_height=3)
+        graphics.add_drone(orientations, positions, color_disk='#4285f4', alpha_disk=0.5, color_normal='r', alpha_normal=0.5)
+        graphics.viz(
+            show=False, 
+            save=True, 
+            path=os.path.join(plot_path, f"3d_simulation_{angle}_topview.{save_plots_file_extension}"), 
+            camera=(89, angle),
+            pad_inches=-1
         ) 
